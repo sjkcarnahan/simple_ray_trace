@@ -3,10 +3,10 @@ Scott Carnahan
 Experiment - Cassegrain with Rowland Circle Grating
 '''
 
-from modules import rayTracing as rt, project_inputs as pi
+from modules import rayTracing as rt
+from instances import project_inputs as pi
 import numpy as np
 import matplotlib.pyplot as plt
-from mpl_toolkits.mplot3d import Axes3D
 from tabulate import tabulate  # note, you can pip install this. It's a handy little package that displays or saves
                                 # tables nicely.
 

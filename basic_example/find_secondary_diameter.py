@@ -7,7 +7,7 @@ import sys
 sys.path.append('../modules/')
 
 import rayTracing as rt
-from modules import project_inputs as pi
+from instances import project_inputs as pi
 
 # define the Experiment to find the necessary secondary diameter
 exp_diam = rt.Experiment()

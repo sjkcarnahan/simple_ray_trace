@@ -7,7 +7,8 @@ incoming angles. Coma should be quite evident.
 '''
 
 import matplotlib.pyplot as plt
-from modules import rayTracing as rt, project_inputs as pi
+from modules import rayTracing as rt
+from instances import project_inputs as pi
 
 # some figure flags
 show_plots = True

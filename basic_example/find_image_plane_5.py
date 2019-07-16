@@ -7,7 +7,8 @@ the paraxial focus in [um] along the instrument axis.
 
 import numpy as np
 import matplotlib.pyplot as plt
-from modules import rayTracing as rt, project_inputs as pi
+from modules import rayTracing as rt
+from instances import project_inputs as pi
 
 show_plots = True
 save_plots = True

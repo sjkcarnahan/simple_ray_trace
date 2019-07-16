@@ -5,7 +5,8 @@ For more descriptive comments, please see find_image_plane_30.py
 
 import numpy as np
 import matplotlib.pyplot as plt
-from modules import rayTracing as rt, project_inputs as pi
+from modules import rayTracing as rt
+from instances import project_inputs as pi
 
 show_plots = False
 save_plots = True
