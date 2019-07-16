@@ -1,0 +1,6 @@
+\contentsline {section}{\numberline {1}Introduction}{1}
+\contentsline {section}{\numberline {2}Diffraction Math}{2}
+\contentsline {subsection}{\numberline {2.1}Grating Math}{2}
+\contentsline {subsection}{\numberline {2.2}Diffraction Direction}{3}
+\contentsline {section}{\numberline {3}Spectrogram}{3}
+\contentsline {section}{\numberline {4}Limiting Resolving Power}{3}
