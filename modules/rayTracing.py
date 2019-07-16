@@ -843,23 +843,23 @@ class Ray:
 
 class RowlandCircle:
     # a rowland circle diffraction grating
-    # circular curvature, but square cut edges
-    # the surface normal always points in +z direction in local (S) frame at the origin
+    # circular curvature, but square-projected cut edges
+    # the surface normal points in +z direction in local (S) frame at the origin
     # i.e., the surface is grazing tangent to the origin (the sphere is not centered on the S origin
     # the S frame y-axis is parallel to the gratings at the origin
     # the x-axis is y cross z, then
-    # The sphere is centered at 0, 0, 0
+    # Analysis can be run for a single wavelength, for a single order of diffraction at a time
     def __init__(self):
         self.r = 1.  # radius of Rowland Circle
         self.w = 0.25  # it's a square chunk of a circle, this is the side length.
         self.m = 1  # diffraction order. For now, just choose one order to look into and do it multiple times to get
                     # multiple orders
-        self.lam = 1000. / 1E10  # wavelength to consider. Again, this is just a hack for now
+        self.lam = 1000. / 1E10  # wavelength to consider. Again, this is just a guess for now
         self.line_density = 1000.  # grating line density
         self.DCM_SL = np.eye(3)  # rotation into the surface frame from lab frame
         self.L_r_L = np.zeros(3).reshape([3, 1])  # offset from lab origin in lab frame coordinates
         self.grating_direction_q = np.array([0., -1., 0.])  # parallel to gratings
-        self.unprojected_spacing = 1.
+        self.unprojected_spacing = 1.  # [m] bad default, really
         self.central_normal = np.array([0., 0., 1.]).reshape([3, 1])
         return
 
