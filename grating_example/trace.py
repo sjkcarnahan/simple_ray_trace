@@ -3,7 +3,7 @@ Scott Carnahan
 Experiment - Cassegrain with Rowland Circle Grating
 '''
 
-from modules import rayTracing as rt
+from modules import experiment as rt
 from instances import project_inputs as pi
 import numpy as np
 import matplotlib.pyplot as plt

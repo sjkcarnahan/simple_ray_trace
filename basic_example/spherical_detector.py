@@ -10,7 +10,7 @@ than being projected to a flat x, y.
 
 import numpy as np
 import matplotlib.pyplot as plt
-from modules import rayTracing as rt
+from modules import experiment, optical_surfaces as surfs
 from instances import project_inputs as pi
 
 # plotting flags
@@ -19,7 +19,7 @@ save_plots = True
 make_plots = show_plots or save_plots
 
 # create an experiment
-exp_sph = rt.Experiment()
+exp_sph = experiment.Experiment()
 
 # set up the instrument
 exp_sph.add_instrument(pi.cass)
@@ -30,7 +30,7 @@ exp_sph.set_ray_starts(rays.X)
 exp_sph.set_ray_start_dir(rays.d)
 
 # make a spherical detector
-spherical_detector = rt.SphericalDetector()
+spherical_detector = surfs.SphericalDetector()
 spherical_detector.L_r_L = np.zeros(3).reshape([3,1])
 spherical_detector.DCM_SL = exp_sph.instrument.detector.DCM_SL
 spherical_detector.w = .5

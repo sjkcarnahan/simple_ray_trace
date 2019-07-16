@@ -7,7 +7,7 @@ the paraxial focus in [um] along the instrument axis.
 
 import numpy as np
 import matplotlib.pyplot as plt
-from modules import rayTracing as rt
+from modules import experiment
 from instances import project_inputs as pi
 
 show_plots = True
@@ -17,7 +17,7 @@ make_plots = show_plots or save_plots
 # Make an Experiment to find the optimal (flat) image plane location with 30 arcsec FOV
 # This is not a fully defined problem, so I just minimize the rms of a set of rays that all come in at 30 arcsec off of
 # parallel
-exp_5 = rt.Experiment()
+exp_5 = experiment.Experiment()
 
 # bring in the instrument
 exp_5.add_instrument(pi.cass)

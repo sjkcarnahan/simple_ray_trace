@@ -7,7 +7,7 @@ dimensions that represent the machine error in tracing the rays to a focus on th
 '''
 
 import matplotlib.pyplot as plt
-from modules import rayTracing as rt
+from modules import experiment as rt
 from instances import project_inputs as pi
 
 # plotting flags
