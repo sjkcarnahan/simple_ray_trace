@@ -9,13 +9,6 @@ import matplotlib.pyplot as plt
 from mpl_toolkits.mplot3d import Axes3D
 from Basilisk.utilities import RigidBodyKinematics as rbk
 
-def quadratic_eqn(t, *args):
-    # given the independent variable, and args=(a,b,c)
-    # returns at2 + bt + c
-    # used for numerical solution of quadratic equation
-    # don't use this anymore.
-    return args[0] * t**2 + args[1] * t + args[2]
-
 def solve_quadratic(a, b, c, pm):
     # standard fo rm of the quadratic equation
     if pm == 1:
