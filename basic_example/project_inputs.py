@@ -1,22 +1,20 @@
-import sys
-sys.path.append('../modules/')
-
-import rayTracing as rt
+from modules import rayTracing as rt
 import numpy as np
 
 # instrument design inputs
-cass_inputs = rt.CassegrainDefinition()  # a struct for my inputs
+# These inputs were provides by Prof Jim Green of CU Boulder for the 1st class project in ASTR 5760 Spring 2019
+cass_inputs = rt.CassegrainDefinition()  # organizational tool
 cass_inputs.f_num_1 = 3.  # primary f number
 cass_inputs.d_1 = 1.  # primary diameter [m]
-cass_inputs.f_num_total = 15.  # instrument total fnumber
-cass_inputs.e = 0.15  # distance secondary focus behind primary vertex
+cass_inputs.f_num_total = 15.  # instrument total f/#
+cass_inputs.e = 0.15  # distance secondary focus behind primary vertex [m]
 cass_inputs.primary_x = 3.  # position of the primary in the lab frame [m]
-cass_inputs.orientation_212 = [-np.pi / 2., 0, 0]  # orientation of the instrument wrt lab frame
 cass_inputs.focal_plane_offset = 0.  # put the detector this far off of the secondary focus
+cass_inputs.orientation_212 = [-np.pi / 2., 0, 0]  # orientation of the instrument wrt lab frame. part of my formulation
 
 # instrument for this project
-cass = rt.Instrument()
-cass.set_surfaces(rt.cassegrain_set_up(cass_inputs))
+cass = rt.Instrument()  # you need an instrument to add to an experiment
+cass.set_surfaces(rt.cassegrain_set_up(cass_inputs))  # and an instrument is essentially a collection of surfaces
 
 # basic paraxial rays
 basic_paraxial_ray_inputs = rt.AngledCircleRayDef()
