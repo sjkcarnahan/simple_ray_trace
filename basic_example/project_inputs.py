@@ -17,15 +17,17 @@ cass = rt.Instrument()  # you need an instrument to add to an experiment
 cass.set_surfaces(rt.cassegrain_set_up(cass_inputs))  # and an instrument is essentially a collection of surfaces
 
 # basic paraxial rays
+# This light source is a set of rays in concentric circles, which is the easiest light source to use to
+# observe spherical aberrations and coma.
 basic_paraxial_ray_inputs = rt.AngledCircleRayDef()
 basic_paraxial_ray_inputs.rad = cass_inputs.d_1 / 2.
 basic_paraxial_ray_inputs.num_circ = 15
 basic_paraxial_ray_inputs.per_circ = 150
 basic_paraxial_ray_inputs.angles = [0.]
 starts, dirs = rt.make_angled_circle_rays(basic_paraxial_ray_inputs)
-basical_paraxial_rays = rt.Ray()
-basical_paraxial_rays.set_dir(dirs[0])
-basical_paraxial_rays.set_pos(starts[0])
+basic_paraxial_rays = rt.Ray()
+basic_paraxial_rays.set_dir(dirs[0])
+basic_paraxial_rays.set_pos(starts[0])
 
 # off-axis angles to try
 various_angles = [0., 1., 3., 5., 10., 30., 60., 120., 240., 600., 1200.]
