@@ -1,16 +1,16 @@
 '''
 Scott Carnahan
-ASTR 5760 Proj 1 - Ray Trace
+Experiment - Spherical Detector Design/Placement
 Spring 2019
+Again, this experiment is similar to the find_image_plane_5 experiment, except there is an addition search dimension for
+the radius of the detector. The results should indicate a continuum of pairs of radii and positions that minimize the
+rms of the points on the detector. Note also that the SphericalDetector() image coordinates are in RA and DEC rather
+than being projected to a flat x, y.
 '''
-import sys
-sys.path.append('../modules/')
 
 import numpy as np
 import matplotlib.pyplot as plt
-import rayTracing as rt
-import project_inputs as pi
-from mpl_toolkits.mplot3d import Axes3D
+from modules import rayTracing as rt, project_inputs as pi
 
 # plotting flags
 show_plots = True

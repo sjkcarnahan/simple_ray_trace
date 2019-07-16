@@ -1,11 +1,11 @@
-import sys
-sys.path.append('../modules/')
+'''
+Scott Carnahan
+For more descriptive comments, please see find_image_plane_30.py
+'''
 
 import numpy as np
 import matplotlib.pyplot as plt
-import matplotlib.ticker as ticker
-import rayTracing as rt
-import project_inputs as pi
+from modules import rayTracing as rt, project_inputs as pi
 
 show_plots = False
 save_plots = True

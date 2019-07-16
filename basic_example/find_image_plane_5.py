@@ -1,18 +1,21 @@
-import sys
-sys.path.append('../modules/')
+'''
+Scott Carnahan
+This file shows how to adjust the image plane position to account for non-paraxial rays.
+The result should be a plot with a minimum trough indicating the best offset for the image plane relative to
+the paraxial focus in [um] along the instrument axis.
+'''
 
 import numpy as np
 import matplotlib.pyplot as plt
-import matplotlib.ticker as ticker
-import rayTracing as rt
-import project_inputs as pi
-
+from modules import rayTracing as rt, project_inputs as pi
 
 show_plots = True
 save_plots = True
 make_plots = show_plots or save_plots
 
 # Make an Experiment to find the optimal (flat) image plane location with 30 arcsec FOV
+# This is not a fully defined problem, so I just minimize the rms of a set of rays that all come in at 30 arcsec off of
+# parallel
 exp_5 = rt.Experiment()
 
 # bring in the instrument
@@ -24,10 +27,12 @@ exp_5.set_ray_start_dir(rays_5.d)
 exp_5.set_ray_starts(rays_5.X)
 nominal_results = exp_5.run()
 f_num_2 = pi.cass_inputs.f_num_total - pi.cass_inputs.f_num_1
-suggested_offset = f_num_2 * nominal_results.mean_spread
-suggested_center = 3.15 - suggested_offset
-delta = suggested_offset * .1
-explore_space = np.arange(suggested_center, 3.15, 1E-6)
+suggested_offset = f_num_2 * nominal_results.mean_spread    # as a first guess, the offset required should be related to
+                                                            # the spread with no offset and the f/# of the secondary
+suggested_center = 3.15 - suggested_offset  # 3.15 is the paraxial focus
+explore_space = np.arange(suggested_center, 3.15, 1E-6)  # the assumption here is that I will only have the capability
+                                                         # to adjust my instrument with 1 micron precision, so why
+                                                         # search any finer grid than that?
 rms_list = []
 for pt in explore_space:
     exp_5.instrument.detector.L_r_L[0][0] = pt

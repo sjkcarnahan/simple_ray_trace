@@ -542,6 +542,9 @@ def make_angled_circle_rays(inputs):
     return rays_list, rays_d_list  # here we have a list of ray sets. one set per angle given. many rays per set
 
 def make_one_edge_ray(rad, angle):
+    # rad is radius of primary
+    # angle is the desired angle of the ray relative to primary centerline
+    # make one ray, starts at the edge of the generating circle at a specified angle. For checking secondary diameter
     x, y, z = 0., rad, 0.,
     L_X = np.array([x,y,z]).reshape([3, 1])
     angle = angle/3600. * np.pi/180.

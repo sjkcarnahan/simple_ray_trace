@@ -1,9 +1,8 @@
 import sys
 sys.path.append('../modules')
 
-from modules import rayTracing as rt
+from modules import rayTracing as rt, project_inputs as pi
 import numpy as np
-import project_inputs as pi
 import matplotlib.pyplot as plt
 from mpl_toolkits.mplot3d import Axes3D
 from Basilisk.utilities import RigidBodyKinematics as rbk
@@ -11,14 +10,13 @@ from tabulate import tabulate
 
 exp = rt.Experiment()
 rays = pi.edge_ray
-rays = pi.basical_paraxial_rays
+rays = pi.basic_paraxial_rays
 exp.set_ray_starts(rays.X)
 exp.set_ray_start_dir(rays.d)
 
 inst = pi.cass
 inst.surfaces[-1] = pi.grating
 inst.surfaces.append(pi.cylindrical_detector)
-# inst.surfaces = inst.surfaces[-2:]
 exp.add_instrument(inst)
 
 wavelength_list = np.arange(1200., 2100., 100.)

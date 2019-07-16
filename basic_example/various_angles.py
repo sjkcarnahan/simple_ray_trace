@@ -1,15 +1,13 @@
 '''
 Scott Carnahan
-ASTR 5760 Proj 1 - Various Angles
+Experiment - Various Angles
 Spring 2019
+There is no goal here other than showing the aberrations on the focal plane due to non-paraxial rays with various
+incoming angles. Coma should be quite evident.
 '''
-import sys
-sys.path.append('../modules/')
 
-import numpy as np
 import matplotlib.pyplot as plt
-import rayTracing as rt
-import project_inputs as pi
+from modules import rayTracing as rt, project_inputs as pi
 
 # some figure flags
 show_plots = True

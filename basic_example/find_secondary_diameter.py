@@ -6,10 +6,8 @@ Spring 2019
 import sys
 sys.path.append('../modules/')
 
-import numpy as np
-import matplotlib.pyplot as plt
 import rayTracing as rt
-import project_inputs as pi
+from modules import project_inputs as pi
 
 # define the Experiment to find the necessary secondary diameter
 exp_diam = rt.Experiment()
