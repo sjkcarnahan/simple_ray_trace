@@ -3,14 +3,12 @@ Scott Carnahan
 ASTR 5760 Proj 1 - find secondary diameter
 Spring 2019
 '''
-import sys
-sys.path.append('../modules/')
 
-import rayTracing as rt
+from modules import experiment
 from instances import project_inputs as pi
 
 # define the Experiment to find the necessary secondary diameter
-exp_diam = rt.Experiment()
+exp_diam = experiment.Experiment()
 
 # bring in the instrument
 exp_diam.add_instrument(pi.cass)

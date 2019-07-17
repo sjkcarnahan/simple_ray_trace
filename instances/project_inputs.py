@@ -5,6 +5,7 @@ cleaner and allows for some reuse, especially in the instrument initialization.
 '''
 from modules import instruments, light_sources as ls, optical_surfaces as surfs
 import numpy as np
+from copy import deepcopy
 from Basilisk.utilities import RigidBodyKinematics as rbk
 
 # instrument design inputs
@@ -118,7 +119,7 @@ cylindrical_detector.set_y_limits()
 
 # Make an instrument with a grating
 grating_cassegrain = instruments.Instrument()
-grating_cassegrain.set_surfaces(cass.surfaces)
+grating_cassegrain.set_surfaces(deepcopy(cass.surfaces))
 grating_cassegrain.surfaces[-1] = grating
 grating_cassegrain.surfaces.append(cylindrical_detector)
 grating_cassegrain.set_detector(cylindrical_detector)
