@@ -365,10 +365,9 @@ class FlatImagePlane(OpticalSurface):
     def reflect_rays(self):
         return
 
-    def extract_image(self, L_X):
+    def extract_image(self):
         # takes in the points that intersected the plane
-        image = np.dot(self.DCM_SL, L_X - self.L_r_L)[0:2, :]
-        return image
+        return self.local_rays.X[0:2, :]
 
     def surface_points(self, num=15):
         xs = np.linspace(-self.w/2, self.w/2)
@@ -394,8 +393,8 @@ class FlatImagePlane(OpticalSurface):
                 X[i,j], Y[i,j], Z[i, j] = vec[0], vec[1], vec[2]
         return X, Y, Z
 
-    def plot_image(self, ax, L_x):
-        pts = self.extract_image(L_x)
+    def plot_image(self, ax):
+        pts = self.extract_image()
         ax.scatter(pts[0, :], pts[1, :], color='black', s=1)
         max_x = np.max(pts[0, :][~np.isnan(pts[0, :])])
         min_x = np.min(pts[0, :][~np.isnan(pts[0, :])])
@@ -434,7 +433,7 @@ class SphericalDetector(OpticalSurface):
     def reflect_rays(self):
         return
 
-    def extract_image(self, L_X):
+    def extract_image(self):
         # takes in the points that intersected the detector
         # spits out angular coordinate on detector
         xs, ys, zs, _, _, _ = self.extract_ray_components()
@@ -661,7 +660,7 @@ class CylindricalDetector(OpticalSurface):
     def reflect_rays(self):
         return
 
-    def extract_image(self, _):
+    def extract_image(self):
         # should change this into a linear and angular  coordinate. Right now it does a spherical RA/DEC transformation
         xs = self.local_rays.X[0, :]
         ys = self.local_rays.X[1, :]

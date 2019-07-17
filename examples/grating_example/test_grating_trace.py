@@ -14,17 +14,17 @@ exp.set_ray_starts(rays.X)
 exp.set_ray_start_dir(rays.d)
 
 exp.add_instrument(deepcopy(ii.grating_cassegrain))
-grating = deepcopy(ii.grating)  # grab for convenience
-detector = deepcopy(ii.cylindrical_detector)  # grab for convenience
+grating = exp.instrument.surfaces[-2]
+detector = exp.instrument.detector
 
 
 grating.set_order(1)
 grating.set_wavelength(1200.)
-exp.reset()
 exp.trace_rays()
 
 angstrom_per_mm = 1E7 / 3600. / 1000.
-x1200 = detector.extract_image(exp.ray_hist[-1])[0, :]
+
+x1200 = detector.extract_image()[0, :]
 dx_1200 = (np.nanmax(x1200) - np.nanmin(x1200)) * 1000.
 resolution_1200 = dx_1200 * angstrom_per_mm
 resolving_power_1200 = 1200. / resolution_1200

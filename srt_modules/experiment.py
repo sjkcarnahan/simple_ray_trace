@@ -65,12 +65,13 @@ class Experiment:
         for i, surf in enumerate(self.instrument.surfaces):
             rays = surf.interact(rays)
             self.ray_hist.append(rays.X)
+        self.L_ray_pts, self.L_ray_dir = rays.X, rays.d
         return
 
     def run(self):
-        self.trace_rays_test()
+        self.trace_rays()
         result = RayTraceResults()
-        result.image = self.instrument.detector.extract_image(self.L_ray_pts)
+        result.image = self.instrument.detector.extract_image()
         result.find_image_rms()
         result.find_image_spread()
         return result
@@ -79,7 +80,7 @@ class Experiment:
         fig = plt.figure()
         ax = fig.add_subplot('111')
         ax.set_title('Results from ' + self.name)
-        self.instrument.detector.plot_image(ax, self.L_ray_pts)
+        self.instrument.detector.plot_image(ax)
         ax.set_xlabel('x [m]')
         ax.set_ylabel('y [m]')
         return fig

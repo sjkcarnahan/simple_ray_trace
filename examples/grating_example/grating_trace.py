@@ -27,7 +27,7 @@ for order in [0, 1, 2]:
         grating.set_wavelength(wavelength)
         exp.reset()
         exp.trace_rays()
-        data_list.append(detector.extract_image(exp.ray_hist[-1]))
+        data_list.append(detector.extract_image())
     if order == 1:
         # this is to be done only on the 1st order trace
         # this gives the spectral resolving power of the grating/instrument at a few wavelengths and prints them
