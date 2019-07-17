@@ -5,16 +5,16 @@ Spring 2019
 '''
 
 from modules import experiment
-from instances import project_inputs as pi
+from instances import instrument_instances as ii, ray_instances as ri
 
 # define the Experiment to find the necessary secondary diameter
 exp_diam = experiment.Experiment()
 
 # bring in the instrument
-exp_diam.add_instrument(pi.cass)
+exp_diam.add_instrument(ii.cass)
 
 # bring in the one off axis edge ray
-edge_ray = pi.edge_ray
+edge_ray = ri.edge_ray
 exp_diam.set_ray_starts(edge_ray.X)
 exp_diam.set_ray_start_dir(edge_ray.d)
 

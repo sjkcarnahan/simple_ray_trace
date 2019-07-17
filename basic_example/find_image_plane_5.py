@@ -8,7 +8,7 @@ the paraxial focus in [um] along the instrument axis.
 import numpy as np
 import matplotlib.pyplot as plt
 from modules import experiment
-from instances import project_inputs as pi
+from instances import instrument_instances as ii, ray_instances as ri
 
 show_plots = True
 save_plots = True
@@ -20,14 +20,14 @@ make_plots = show_plots or save_plots
 exp_5 = experiment.Experiment()
 
 # bring in the instrument
-exp_5.add_instrument(pi.cass)
+exp_5.add_instrument(ii.cass)
 
 # bring the 30 arcsecond rays
-rays_5 = pi.five_min_rays
+rays_5 = ri.five_min_rays
 exp_5.set_ray_start_dir(rays_5.d)
 exp_5.set_ray_starts(rays_5.X)
 nominal_results = exp_5.run()
-f_num_2 = pi.cass_inputs.f_num_total - pi.cass_inputs.f_num_1
+f_num_2 = ii.cass_inputs.f_num_total - ii.cass_inputs.f_num_1
 suggested_offset = f_num_2 * nominal_results.mean_spread    # as a first guess, the offset required should be related to
                                                             # the spread with no offset and the f/# of the secondary
 suggested_center = 3.15 - suggested_offset  # 3.15 is the paraxial focus

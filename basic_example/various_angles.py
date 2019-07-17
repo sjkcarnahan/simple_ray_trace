@@ -8,7 +8,7 @@ incoming angles. Coma should be quite evident.
 
 import matplotlib.pyplot as plt
 from modules import experiment as rt
-from instances import project_inputs as pi
+from instances import instrument_instances as ii, ray_instances as ri
 
 # some figure flags
 show_plots = True
@@ -18,11 +18,11 @@ save_plots = True
 exp_2 = rt.Experiment()
 
 # bring in the instrument
-exp_2.add_instrument(pi.cass)
+exp_2.add_instrument(ii.cass)
 
 # get the rays to trace
-ray_sets = pi.angled_ray_list
-angle_set = pi.various_angles
+ray_sets = ri.angled_ray_list
+angle_set = ri.various_angles
 
 
 # run the Experiments

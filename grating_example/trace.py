@@ -4,21 +4,21 @@ Experiment - Cassegrain with Rowland Circle Grating
 '''
 
 from modules import experiment as rt
-from instances import project_inputs as pi
+from instances import instrument_instances as ii, ray_instances as ri
 import numpy as np
 import matplotlib.pyplot as plt
 from tabulate import tabulate  # note, you can pip install this. It's a handy little package that displays or saves
                                 # tables nicely.
 
 exp = rt.Experiment()
-rays = pi.basic_paraxial_rays
+rays = ri.basic_paraxial_rays
 exp.set_ray_starts(rays.X)
 exp.set_ray_start_dir(rays.d)
 
-exp.add_instrument(pi.grating_cassegrain)
-grating = pi.grating  # grab for convenience
-detector = pi.cylindrical_detector  # grab for convenience
-wavelength_list = pi.wavelength_list
+exp.add_instrument(ii.grating_cassegrain)
+grating = ii.grating  # grab for convenience
+detector = ii.cylindrical_detector  # grab for convenience
+wavelength_list = ri.wavelength_list
 
 data_list = []  # each entry will be the scatter plot from a single wavelength, single diffraction order
 for order in [0, 1, 2]:
@@ -63,7 +63,7 @@ scat_fig = plt.figure(figsize=(20, 5))
 
 ax2 = scat_fig.add_subplot('111')
 for order in range(3):
-    for col, wavelength in zip(pi.colors, data_list):
+    for col, wavelength in zip(ri.colors, data_list):
         ax2.scatter(wavelength[0, :], wavelength[1, :]*100, s=1, color=col)
 ax2.set_xlabel('RA [rad]')
 ax2.set_ylabel('height (along cylinder axis) [cm]')

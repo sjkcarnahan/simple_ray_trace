@@ -11,7 +11,7 @@ than being projected to a flat x, y.
 import numpy as np
 import matplotlib.pyplot as plt
 from modules import experiment, optical_surfaces as surfs
-from instances import project_inputs as pi
+from instances import instrument_instances as ii, ray_instances as ri
 
 # plotting flags
 show_plots = True
@@ -22,10 +22,10 @@ make_plots = show_plots or save_plots
 exp_sph = experiment.Experiment()
 
 # set up the instrument
-exp_sph.add_instrument(pi.cass)
+exp_sph.add_instrument(ii.cass)
 
 # choose some rays
-rays = pi.five_min_rays
+rays = ri.five_min_rays
 exp_sph.set_ray_starts(rays.X)
 exp_sph.set_ray_start_dir(rays.d)
 

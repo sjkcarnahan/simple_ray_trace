@@ -6,7 +6,7 @@ For more descriptive comments, please see find_image_plane_30.py
 import numpy as np
 import matplotlib.pyplot as plt
 from modules import experiment as rt
-from instances import project_inputs as pi
+from instances import instrument_instances as ii, ray_instances as ri
 
 show_plots = False
 save_plots = True
@@ -16,14 +16,14 @@ make_plots = show_plots or save_plots
 exp_30 = rt.Experiment()
 
 # bring in the instrument
-exp_30.add_instrument(pi.cass)
+exp_30.add_instrument(ii.cass)
 
 # bring the 30 arcsecond rays
-rays_30 = pi.thirty_sec_rays
+rays_30 = ri.thirty_sec_rays
 exp_30.set_ray_start_dir(rays_30.d)
 exp_30.set_ray_starts(rays_30.X)
 nominal_results = exp_30.run()
-f_num_2 = pi.cass_inputs.f_num_total - pi.cass_inputs.f_num_1
+f_num_2 = ii.cass_inputs.f_num_total - ii.cass_inputs.f_num_1
 suggested_offset = f_num_2 * nominal_results.mean_spread
 suggested_center = 3.15 - suggested_offset
 delta = suggested_offset * .1

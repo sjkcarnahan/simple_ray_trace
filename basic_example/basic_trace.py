@@ -8,7 +8,7 @@ dimensions that represent the machine error in tracing the rays to a focus on th
 
 import matplotlib.pyplot as plt
 from modules import experiment as rt
-from instances import project_inputs as pi
+from instances import instrument_instances as ii, ray_instances as ri
 
 # plotting flags
 show_plots = True
@@ -19,11 +19,11 @@ exp_1 = rt.Experiment()  # a container to hold the instrument and results etc. a
 exp_1.name = "basic_trace"  # this can be used in file names when saving things
 
 # bring in the instrument
-exp_1.add_instrument(pi.cass)  # the instrument is defined in a different file to keep it simple and clean here
+exp_1.add_instrument(ii.cass)  # the instrument is defined in a different file to keep it simple and clean here
 
 # Make rays for this Experiment. In rendering lingo this is defining a light source, or multiple point light sources
-exp_1.set_ray_starts(pi.basic_paraxial_rays.X)
-exp_1.set_ray_start_dir(pi.basic_paraxial_rays.d)
+exp_1.set_ray_starts(ri.basic_paraxial_rays.X)
+exp_1.set_ray_start_dir(ri.basic_paraxial_rays.d)
 
 # run and plot
 exp_1.run()  # steps through all surfaces to find ray intersections and reflections
