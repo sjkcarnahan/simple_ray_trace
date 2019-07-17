@@ -4,6 +4,7 @@ simple ray trace - plotting utilities
 '''
 import numpy as np
 import matplotlib.pyplot as plt
+from mpl_toolkits import mplot3d
 
 def prep_rays_for_plot(ray_history):
     ray_list = []

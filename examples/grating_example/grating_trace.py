@@ -3,7 +3,7 @@ Scott Carnahan
 Experiment - Cassegrain with Rowland Circle Grating
 '''
 
-from srt_modules import experiment as rt
+from srt_modules import experiment as rt, plotting
 from srt_instances import instrument_instances as ii, ray_instances as ri
 import numpy as np
 import matplotlib.pyplot as plt
@@ -55,9 +55,10 @@ for order in [0, 1, 2]:
         with open('./resolvingTable.txt', 'w') as f:
             f.write(table)
             f.close()
-        # fig1 = rt.save_3d_plot(inst.surfaces, exp.ray_hist)  # This is useful for debugging but ugly. The detector is un-
-        # realistically large to be able to catch 0th-2nd orders all at once.
+        # fig1 = plotting.save_3d_plot(exp.instrument.surfaces, exp.ray_hist)  # This is useful for debugging but ugly. The detector is un-
+        # #realistically large to be able to catch 0th-2nd orders all at once.
         # plt.savefig('./figures/lab_view.png')
+        # plt.show()
 
 # scat_fig = plt.figure(figsize=(20, 5))
 #

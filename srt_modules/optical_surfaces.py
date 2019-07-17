@@ -18,11 +18,16 @@ class OpticalSurface(object):
         self.num_rays = 0
         self.quadratic_solver = mullers_quadratic_equation
         self.quadratic_pm = 1  # plus (1) or minus (0) side of the solution
+        self.r = 1.
         return
 
     def normal_equation(self):
         # Given points on the surface, calculate the normal to surface at those points in S frame
         return np.array([])  # 3 x N of normals
+
+    def equation(self, xs, ys):
+        # equation for the surface. given x, y returns z
+        return np.array([])
 
     def normals(self):
         # given points on the paraboloid, gives unit normal vectors in the lab frame
@@ -99,6 +104,21 @@ class OpticalSurface(object):
         zds = self.local_rays.d[2, :]
         return x0s, y0s, z0s, xds, yds, zds
 
+    def surface_mesh(self, r_pts=2, t_pts=30):
+        out_rad = self.r
+        rad_points = np.linspace(0., out_rad, r_pts)
+        theta_points = np.linspace(0., np.pi * 2., t_pts)
+        R, T = np.meshgrid(rad_points, theta_points)
+        X, Y = R * np.cos(T), R * np.sin(T)
+        Z = self.equation(X, Y)
+        for i in range(np.shape(Z)[0]):
+            for j in range(np.shape(Z)[1]):
+                vec = np.array([X[i,j], Y[i,j], Z[i,j]])
+                vec = np.dot(self.DCM_LS, vec)
+                vec = vec + self.L_r_L.reshape(3,)
+                X[i,j], Y[i,j], Z[i, j] = vec[0], vec[1], vec[2]
+        return X, Y, Z
+
 class ParabolicMirrorWithHole(OpticalSurface):
     # a symmetric paraboloid
     # a is the scaling factor. a(x2 + y2) = z
@@ -112,6 +132,7 @@ class ParabolicMirrorWithHole(OpticalSurface):
         super(ParabolicMirrorWithHole, self).__init__(e212, L_r_L)
         self.a = a # slope
         self.outer_diam = outer_diam
+        self.r = self.outer_diam/2.
         self.inner_diam = inner_diam
         self.max_z = 10.
         self.min_z = 0.
@@ -134,7 +155,7 @@ class ParabolicMirrorWithHole(OpticalSurface):
 
     def normal_equation(self):
         xs, ys, zs, _, _, _ = self.extract_ray_components()
-        return np.array([2 * self.a * xs, 2 * self.a * ys, -np.ones(np.shape(ys))])
+        return np.array([2 * self.a * xs, 2 * self.a * ys, -np.ones(self.num_rays)])
 
     def set_limits(self):
         # because everything is done in the surface frame
@@ -169,23 +190,6 @@ class ParabolicMirrorWithHole(OpticalSurface):
         X = X + self.L_r_L
         return X
 
-    def surface_mesh(self):
-        # give x, y, z points for the surface to be surface plotted
-        out_rad = self.outer_diam / 2.
-        in_rad = self.inner_diam / 2.
-        rad_points = np.linspace(in_rad, out_rad, 2)
-        theta_points = np.linspace(0., np.pi * 2., 20)
-        R, T = np.meshgrid(rad_points, theta_points)
-        X, Y = R * np.cos(T), R * np.sin(T)
-        Z = self.equation(X, Y)
-        for i in range(np.shape(Z)[0]): # transpose into lab frame
-            for j in range(np.shape(Z)[1]):
-                vec = np.array([X[i,j], Y[i,j], Z[i,j]])
-                vec = np.dot(self.DCM_LS, vec)
-                vec = vec + self.L_r_L.reshape(3,)
-                X[i,j], Y[i,j], Z[i, j] = vec[0], vec[1], vec[2]
-        return X, Y, Z
-
     def ABCs(self):
         x0s, y0s, z0s, xds, yds, zds = self.extract_ray_components()
         A = yds ** 2 + xds ** 2
@@ -219,20 +223,9 @@ class CircleOfDeath(OpticalSurface):
                     L_points.append(np.dot(self.DCM_LS, S_point) + self.L_r_L.reshape([3, ]))
         return np.array(L_points).transpose()
 
-    def surface_mesh(self):
-        out_rad = self.r
-        rad_points = np.linspace(0., out_rad, 2)
-        theta_points = np.linspace(0., np.pi * 2., 30)
-        R, T = np.meshgrid(rad_points, theta_points)
-        X, Y = R * np.cos(T), R * np.sin(T)
-        Z = np.zeros(np.shape(X))
-        for i in range(np.shape(Z)[0]):
-            for j in range(np.shape(Z)[1]):
-                vec = np.array([X[i,j], Y[i,j], Z[i,j]])
-                vec = np.dot(self.DCM_LS, vec)
-                vec = vec + self.L_r_L.reshape(3,)
-                X[i,j], Y[i,j], Z[i, j] = vec[0], vec[1], vec[2]
-        return X, Y, Z
+    def equation(self, *args):
+        # args are xs and ys, but I don't care about the data or the ys at all, just the shape of the data
+        return np.zeros(np.shape(args[0]))
 
     def intersect_rays(self):
         # takes in ray starts and direction unit vectors in lab frame
@@ -259,6 +252,7 @@ class ConvexHyperbolicMirror(OpticalSurface):
         self.a = a
         self.b = b
         self.diam = diam
+        self.r = self.diam / 2.
         self.max_z = 10.
         self.min_z = 0.
         self.set_limits()
@@ -300,21 +294,6 @@ class ConvexHyperbolicMirror(OpticalSurface):
         X = np.dot(self.DCM_LS, X)
         X = X + self.L_r_L
         return X
-
-    def surface_mesh(self):
-        out_rad = self.diam / 2.
-        rad_points = np.linspace(0., out_rad, 2)
-        theta_points = np.linspace(0., np.pi * 2., 30)
-        R, T = np.meshgrid(rad_points, theta_points)
-        X, Y = R * np.cos(T), R * np.sin(T)
-        Z = self.equation(X, Y)
-        for i in range(np.shape(Z)[0]):
-            for j in range(np.shape(Z)[1]):
-                vec = np.array([X[i,j], Y[i,j], Z[i,j]])
-                vec = np.dot(self.DCM_LS, vec)
-                vec = vec + self.L_r_L.reshape(3,)
-                X[i,j], Y[i,j], Z[i, j] = vec[0], vec[1], vec[2]
-        return X, Y, Z
 
     def equation(self, xs, ys):
         # defining equation for a circular hyperboloid
@@ -553,9 +532,9 @@ class RowlandCircle(OpticalSurface):
         d = self.unprojected_spacing / u
         L = self.m * self.lam / d  # assumes wavelength is defined in current medium or probably that we're always in vacuum
         mu = 1.  # no change in medium
-        kulvmw = np.array([np.dot(p[:, i], self.local_rays.d[:, i]) for i in range(np.shape(p)[1])])
+        kulvmw = np.array([np.dot(p[:, i], self.local_rays.d[:, i]) for i in range(self.num_rays)])
         b_prime = (mu**2. - 1. + L**2. - 2. * mu * L * kulvmw)  # notice I don't divide by r**2 because I norm my normals
-        a = mu * np.array([np.dot(self.local_rays.d[:, i], r[:, i]) for i in range(np.shape(self.local_rays.d)[1])])
+        a = mu * np.array([np.dot(self.local_rays.d[:, i], r[:, i]) for i in range(self.num_rays)])
         nans = np.isnan(b_prime)
         doable = np.ones(len(b_prime), dtype=bool)
         doable[~nans] = b_prime[~nans] <= a[~nans]**2
@@ -616,8 +595,7 @@ class CylindricalDetector(OpticalSurface):
 
     def normal_equation(self):
         _, ys, zs, _, _, _ = self.extract_ray_components()
-        num = np.shape(zs)[0]
-        return -np.array([np.zeros(num), 2 * ys, 2 * (zs - self.r)])
+        return -np.array([np.zeros(self.num_rays), 2 * ys, 2 * (zs - self.r)])
 
     def ABCs(self):
         # takes in ray starts and direction unit vectors in lab frame
