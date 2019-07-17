@@ -61,7 +61,7 @@ def cassegrain_set_up(inputs):  # inputs are a CassegrainDefinition()
 
     # the "dead spot" here is a hacky tool to kill rays that hit the back of the secondary
     dead_spot_position = secondary_position - np.array([secondary.max_z, 0., 0.])  # lab frame
-    dead_spot = surfs.circleOfDeath(d_2 / 2., dead_spot_position, inputs.orientation_212)
+    dead_spot = surfs.CircleOfDeath(d_2 / 2., dead_spot_position, inputs.orientation_212)
 
     # the image plane is something for the rays to intersect and be plotted, or imaged
     image_plane_position = primary_position + np.array([inputs.e + inputs.focal_plane_offset, 0., 0.])  # lab frame
@@ -91,7 +91,7 @@ def cassegrain_set_up_spherical_detector(f_num_1, d_1, f_num_tot, e, primary_x, 
     secondary_position = np.array([primary_x + d + secondary_a, 0., 0])
     secondary = surfs.ConvexHyperbolicMirror(secondary_b, secondary_a, d_2, secondary_position, orientation)
     dead_spot_position = secondary_position - np.array([secondary.max_z, 0., 0.])
-    dead_spot = surfs.circleOfDeath(d_2 / 2., dead_spot_position, orientation)
+    dead_spot = surfs.CircleOfDeath(d_2 / 2., dead_spot_position, orientation)
     image_plane_position = primary_position + np.array([e+image_plane_offset, 0., 0.])
     image_plane = surfs.SphericalImagePlane(image_plane_r, image_plane_max_r, image_plane_position, orientation)
     return [dead_spot, primary, secondary, image_plane]

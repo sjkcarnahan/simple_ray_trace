@@ -6,9 +6,9 @@ import numpy as np
 from srt_modules.useful_math import euler1232C
 
 class Ray:
-    def __init__(self):
-        self.X = None  # 3 x N position vectors of rays
-        self.d = None  # direction vectors of rays in same frame
+    def __init__(self, pos=None, dirs=None):
+        self.X = pos  # 3 x N position vectors of rays
+        self.d = dirs  # direction vectors of rays in same frame
         return
 
     def set_pos(self, ray_starts):

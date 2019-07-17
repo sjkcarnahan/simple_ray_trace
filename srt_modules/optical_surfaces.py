@@ -5,15 +5,17 @@ simple ray trace - define surfaces (mirrors, detectors, etc)
 import numpy as np
 from srt_modules.useful_math import solve_quadratic, mullers_quadratic_equation
 from srt_modules.useful_math import euler2122C
+import light_sources
 
 class OpticalSurface(object):
     # An abstract class from which to derive mirrors, dead spots, detectors, etc.
     def __init__(self, e212, L_r_L):
         self.DCM_SL = euler2122C(e212)
         self.DCM_LS = self.DCM_SL.transpose()
-        self.L_r_L = L_r_L
-        self.local_rays = np.array([])
-        self.lab_rays = np.array([])
+        self.L_r_L = np.array(L_r_L).reshape([3, 1])
+        self.local_rays = light_sources.Ray()
+        self.lab_rays = light_sources.Ray()
+        self.num_rays = 0
         return
 
     def intersect_rays(self):
@@ -27,6 +29,7 @@ class OpticalSurface(object):
 
     def make_local_rays(self, rays):
         self.lab_rays = rays
+        self.num_rays = np.shape(self.lab_rays.X)[1]
         self.local_rays.set_pos(np.dot(self.DCM_SL, self.lab_rays.X - self.L_r_L))
         self.local_rays.set_dir(np.dot(self.DCM_SL, self.lab_rays.d))
         return
@@ -55,14 +58,13 @@ class ParabolicMirrorWithHole(OpticalSurface):
     # e212 is the euler 2-1-2 rotation describing the orientation of the surface wrt the lab frame.
     # L_r_L is the lab-frame-resolved position of the vertex of the paraboloid
     def __init__(self, a, outer_diam, inner_diam, e212, L_r_L):
+        super(ParabolicMirrorWithHole, self).__init__(e212, L_r_L)
         self.a = a # slope
         self.outer_diam = outer_diam
         self.inner_diam = inner_diam
         self.max_z = 10.
         self.min_z = 0.
         self.set_limits()
-        self.DCM_SL = euler2122C(e212)
-        self.L_r_L = L_r_L.reshape([3, 1])
         self.S_focus = np.array([0., 0., 1 / 4. / a])
         self.L_focus = np.dot(self.DCM_SL.transpose(), np.array([0., 0., 1 / 4. / a])) + self.L_r_L.reshape([3, ])
         self.name = 'primary'
@@ -73,19 +75,20 @@ class ParabolicMirrorWithHole(OpticalSurface):
         return self.a * (xs **2 + ys**2)
 
     def focus(self):
+        # return focus in the lab frame
         # focus at 1/(4a)
         f = np.array([0., 0., 1. / 4. / self.a])
-        return np.dot(self.DCM_SL.transpose(), f)
+        return np.dot(self.DCM_LS, f)
 
-    def normal(self, L_X):
-        # given points on the paraboloid, gives unit normal vectors.
-        S_X = np.dot(self.DCM_SL, L_X - self.L_r_L)
-        xs = S_X[0, :]
-        ys = S_X[1, :]
+    def normals(self):
+        # given points on the paraboloid, gives unit normal vectors in the lab frame
+        # This is because the reflection model used is done in the lab frame for an unknown reason
+        xs = self.local_rays.X[0, :]
+        ys = self.local_rays.X[1, :]
         num = np.shape(ys)
         S_N = np.array([2 * self.a * xs, 2 * self.a * ys, -np.ones(num)])
         S_N_hat = S_N / np.linalg.norm(S_N, axis=0)
-        L_N_hat = np.dot(self.DCM_SL.transpose(), S_N_hat)
+        L_N_hat = np.dot(self.DCM_LS, S_N_hat)
         return L_N_hat
 
     def set_limits(self):
@@ -117,7 +120,7 @@ class ParabolicMirrorWithHole(OpticalSurface):
         y_out = y_out[(z_out <= self.max_z) & (z_out >= self.min_z)]
         z_out = z_out[(z_out <= self.max_z) & (z_out >= self.min_z)]
         X = np.vstack([x_out, y_out, z_out])
-        X = np.dot(self.DCM_SL.transpose(), X)
+        X = np.dot(self.DCM_LS, X)
         X = X + self.L_r_L
         return X
 
@@ -133,68 +136,58 @@ class ParabolicMirrorWithHole(OpticalSurface):
         for i in range(np.shape(Z)[0]): # transpose into lab frame
             for j in range(np.shape(Z)[1]):
                 vec = np.array([X[i,j], Y[i,j], Z[i,j]])
-                vec = np.dot(self.DCM_SL.transpose(), vec)
+                vec = np.dot(self.DCM_LS, vec)
                 vec = vec + self.L_r_L.reshape(3,)
                 X[i,j], Y[i,j], Z[i, j] = vec[0], vec[1], vec[2]
         return X, Y, Z
 
-    def intersect_rays(self, L_X_0, L_X_d):
-        # takes in ray starts and direction unit vectors in lab frame
-        num = np.shape(L_X_0)[1]
-        S_X_0 = np.dot(self.DCM_SL, L_X_0 - self.L_r_L)
-        S_X_d = np.dot(self.DCM_SL, L_X_d)
-        x0s = S_X_0[0, :]
-        xds = S_X_d[0, :]
-        y0s = S_X_0[1, :]
-        yds = S_X_d[1, :]
-        z0s = S_X_0[2, :]
-        zds = S_X_d[2, :]
+    def intersect_rays(self):
+        x0s = self.local_rays.X[0, :]
+        xds = self.local_rays.d[0, :]
+        y0s = self.local_rays.X[1, :]
+        yds = self.local_rays.d[1, :]
+        z0s = self.local_rays.X[2, :]
+        zds = self.local_rays.d[2, :]
         A = yds ** 2 + xds ** 2
         B = 2 * (x0s * xds + y0s * yds) - zds / self.a
         C = x0s**2 + y0s**2 -z0s / self.a
         non_nan = ~np.isnan(x0s)
         ts = mullers_quadratic_equation(A[non_nan], B[non_nan], C[non_nan], -1)
-        S_X_1 = S_X_0
-        S_X_1[:, non_nan] = S_X_0[:, non_nan] + ts * S_X_d[:, non_nan]
-        L_X_1 = np.dot(self.DCM_SL.transpose(), S_X_1) + self.L_r_L
-        return L_X_1
+        self.local_rays.X[:, non_nan] = self.local_rays.X[:, non_nan] + ts * self.local_rays.d[:, non_nan]
+        return
 
-    def miss_rays(self, L_X):
-        # L_X is an intersection point for a parabolloid that is infinite with no holes
-        S_X = np.dot(self.DCM_SL, L_X - self.L_r_L)
-        zs = S_X[2, :]
+    def miss_rays(self):
+        zs = self.local_rays.X[2, :]
         zs[np.isnan(zs)] = -1.
-        temp = S_X.transpose()
+        temp = self.local_rays.X.transpose()
         temp[(zs > self.max_z) | (zs < self.min_z)] = np.array([np.nan] * 3)
-        S_X = temp.transpose()
-        L_X = np.dot(self.DCM_SL.transpose(), S_X) + self.L_r_L
-        return L_X
+        self.local_rays.X = temp.transpose()
+        return
 
-    def reflect_rays(self, L_X, L_d_i):
+    def reflect_rays(self):
         # takes an intersect point L_X and incoming direction L_d_i
         # produces an outgoing direction L_d_o
         # is there a better vectorized way of doing this?
-        num = np.shape(L_X)[1]
-        L_N_hat = self.normal(L_X)
+        # Also can it be done in the surface frame directly?
+        L_N_hat = self.normals()
         L_d_o = []
-        for i in range(num):
-            incoming = L_d_i[:,i]
+        for i in range(self.num_rays):
+            incoming = self.lab_rays.d[:,i]
             nHat = L_N_hat[:,i]
             M = np.eye(3) -2 * np.outer(nHat, nHat)
             L_d_o.append(np.dot(M, incoming))
-        return np.array(L_d_o).transpose()  # just put it back into 3xN array format
+        self.local_rays.d = np.dot(self.DCM_SL, np.array(L_d_o).transpose())
+        return
 
-class circleOfDeath:
+class CircleOfDeath(OpticalSurface):
     # a circular surface that kills rays (back of a mirror perhaps)
     # defined in the x-y frame with a displacement and rotation
     def __init__(self, r, L_r_L, e212):
+        super(CircleOfDeath, self).__init__(e212, L_r_L)
         self.r = r
         self.L_r_L = L_r_L.reshape([3, 1])
         self.DCM_SL = euler2122C(e212)
         self.name = "dead_spot"
-
-    def miss_rays(self, L_X_0):
-        return L_X_0
 
     def surface_points(self, num=10):
         rs = np.linspace(0, self.r, num)
@@ -208,7 +201,7 @@ class circleOfDeath:
                     L_points.append(np.array([np.nan] * 3))
                 else:
                     S_point = np.array([x, y, 0])
-                    L_points.append(np.dot(self.DCM_SL.transpose(), S_point) + self.L_r_L.reshape([3, ]))
+                    L_points.append(np.dot(self.DCM_LS, S_point) + self.L_r_L.reshape([3, ]))
         return np.array(L_points).transpose()
 
     def surface_mesh(self):
@@ -221,34 +214,26 @@ class circleOfDeath:
         for i in range(np.shape(Z)[0]):
             for j in range(np.shape(Z)[1]):
                 vec = np.array([X[i,j], Y[i,j], Z[i,j]])
-                vec = np.dot(self.DCM_SL.transpose(), vec)
+                vec = np.dot(self.DCM_LS, vec)
                 vec = vec + self.L_r_L.reshape(3,)
                 X[i,j], Y[i,j], Z[i, j] = vec[0], vec[1], vec[2]
         return X, Y, Z
 
-    def reflect_rays(self, L_X, L_d):
-        return L_d
-
-    def intersect_rays(self, L_X_0, L_X_d):
+    def intersect_rays(self):
         # takes in ray starts and direction unit vectors in lab frame
-        num = np.shape(L_X_0)[1]
-        S_X_0 = np.dot(self.DCM_SL, L_X_0 - self.L_r_L)
-        S_X_d = np.dot(self.DCM_SL, L_X_d)
-        x0s = S_X_0[0, :]
-        xds = S_X_d[0, :]
-        y0s = S_X_0[1, :]
-        yds = S_X_d[1, :]
-        z0s = S_X_0[2, :]
-        zds = S_X_d[2, :]
+        x0s = self.local_rays.X[0, :]
+        xds = self.local_rays.d[0, :]
+        y0s = self.local_rays.X[1, :]
+        yds = self.local_rays.d[1, :]
+        z0s = self.local_rays.X[2, :]
+        zds = self.local_rays.d[2, :]
         ts = -z0s / zds
         xs = x0s + ts * xds
         ys = y0s + ts * yds
-        S_X_1 = S_X_0 + ts * S_X_d
-        temp = S_X_1.transpose()
+        temp = np.array(self.local_rays.X + ts * self.local_rays.d).transpose()
         temp[xs**2. + ys**2. <= self.r ** 2] = np.array([np.nan] * 3)
-        S_X_1 = temp.transpose()
-        L_X_1 = np.dot(self.DCM_SL.transpose(), S_X_1) + self.L_r_L
-        return L_X_1
+        self.local_rays.X = temp.transpose()
+        return
 
 class ConvexHyperbolicMirror:
     def __init__(self, b, a, diam, L_r_L, e212):

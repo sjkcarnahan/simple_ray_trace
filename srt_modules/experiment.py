@@ -6,6 +6,7 @@ Spring 2019
 
 import numpy as np
 import matplotlib.pyplot as plt
+import light_sources as ls
 
 class RayTraceResults:
     def __init__(self):
@@ -67,8 +68,22 @@ class Experiment:
             self.ray_hist.append(self.L_ray_pts)  # will I have to np.copy here?
         return
 
+    def trace_rays_test(self):
+        for i, surf in enumerate(self.instrument.surfaces):
+            if i in [0, 1]:
+                rays = ls.Ray(self.L_ray_pts, self.L_ray_dir)
+                rays = surf.interact(rays)
+                self.L_ray_pts = rays.X
+                self.L_ray_dir = rays.d
+            else:
+                self.L_ray_pts = surf.intersect_rays(self.L_ray_pts, self.L_ray_dir)
+                self.L_ray_pts = surf.miss_rays(self.L_ray_pts)
+                self.L_ray_dir = surf.reflect_rays(self.L_ray_pts, self.L_ray_dir)
+            self.ray_hist.append(self.L_ray_pts)
+        return
+
     def run(self):
-        self.trace_rays()
+        self.trace_rays_test()
         result = RayTraceResults()
         result.image = self.instrument.detector.extract_image(self.L_ray_pts)
         result.find_image_rms()
