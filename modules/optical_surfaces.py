@@ -4,7 +4,7 @@ simple ray trace - define surfaces (mirrors, detectors, etc)
 '''
 import numpy as np
 from modules.useful_math import solve_quadratic, mullers_quadratic_equation
-from Basilisk.utilities import RigidBodyKinematics as rbk
+from modules.useful_math import euler2122C
 
 class parabolicMirrorWithHole:
     # a symmetric paraboloid
@@ -22,7 +22,7 @@ class parabolicMirrorWithHole:
         self.max_z = 10.
         self.min_z = 0.
         self.set_limits()
-        self.DCM_SL = rbk.euler2122C(e212)
+        self.DCM_SL = euler2122C(e212)
         self.L_r_L = L_r_L.reshape([3, 1])
         self.S_focus = np.array([0., 0., 1 / 4. / a])
         self.L_focus = np.dot(self.DCM_SL.transpose(), np.array([0., 0., 1 / 4. / a])) + self.L_r_L.reshape([3, ])
@@ -151,7 +151,7 @@ class circleOfDeath:
     def __init__(self, r, L_r_L, e212):
         self.r = r
         self.L_r_L = L_r_L.reshape([3, 1])
-        self.DCM_SL = rbk.euler2122C(e212)
+        self.DCM_SL = euler2122C(e212)
         self.name = "dead_spot"
 
     def miss_rays(self, L_X_0):
@@ -221,7 +221,7 @@ class ConvexHyperbolicMirror:
         self.max_z = 10.
         self.min_z = 0.
         self.L_r_L = L_r_L.reshape([3, 1])
-        self.DCM_SL = rbk.euler2122C(e212)
+        self.DCM_SL = euler2122C(e212)
         self.set_limits()
         self.S_focus = np.zeros(3)
         self.L_focus = np.zeros(3)
@@ -343,7 +343,7 @@ class FlatImagePlane:
         self.w = w
         self.h = h
         self.L_r_L = L_r_L.reshape([3, 1])
-        self.DCM_SL = rbk.euler2122C(e212)
+        self.DCM_SL = euler2122C(e212)
         self.name = "image_plane"
 
     def intersect_rays(self, L_X_0, L_X_d):

@@ -7,7 +7,7 @@ Here we have some useful and reusable instantiations of instrument and surface m
 from modules import instruments, light_sources as ls, optical_surfaces as surfs
 import numpy as np
 from copy import deepcopy
-from Basilisk.utilities import RigidBodyKinematics as rbk
+from modules.useful_math import euler2122C, euler1232C
 
 # instrument design inputs
 cass_inputs = instruments.CassegrainDefinition()  # organizational tool
@@ -30,8 +30,8 @@ mode = 1  # mode/order. design the placement of the detector and grating around 
 lam = 1600E-10  # design wavelength
 d = 1. / (line_density * 1000.)  # [m] per groove
 alpha = np.arcsin(mode * lam / d)  # classic grating alpha and beta angles
-rotation_for_beta_zero = rbk.euler2122C([alpha, 0., 0.])  # this is being designed to beta = 0
-DCM_basic = rbk.euler2122C([-np.pi/2., 0., 0.])
+rotation_for_beta_zero = euler2122C([alpha, 0., 0.])  # this is being designed to beta = 0
+DCM_basic = euler2122C([-np.pi/2., 0., 0.])
 DCM_SL = np.dot(rotation_for_beta_zero, DCM_basic)
 grating = surfs.RowlandCircle()
 grating.set_radius(1.0)
@@ -51,8 +51,8 @@ cylindrical_detector = surfs.CylindricalDetector()
 cylindrical_detector.set_radius(1.0)
 cylindrical_detector.set_height(1.0)
 cylindrical_detector.set_sweep_angle(np.pi)
-dcm_cyl = np.dot(rbk.euler2122C([np.pi, 0., 0.]), DCM_SL)
-dcm_rot = np.dot(rbk.euler1232C([0., 0., -np.pi/2.]), dcm_cyl)
+dcm_cyl = np.dot(euler2122C([np.pi, 0., 0.]), DCM_SL)
+dcm_rot = np.dot(euler1232C([0., 0., -np.pi/2.]), dcm_cyl)
 cylindrical_detector.set_DCM(dcm_rot)
 offset = np.dot(DCM_SL.transpose() , np.array([0., 0., 1.0]))
 cylindrical_detector.set_position(pos + offset.reshape([3, 1]))

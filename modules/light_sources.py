@@ -3,7 +3,7 @@ Scott Carnahan
 simple ray trace - tools and classes to specify and instantiate rays
 '''
 import numpy as np
-from Basilisk.utilities import RigidBodyKinematics as rbk
+from modules.useful_math import euler1232C
 
 class Ray:
     def __init__(self):
@@ -45,7 +45,7 @@ def make_angled_circle_rays(inputs):
                 rays.append(np.array([x, y, z]))
         rays = np.array(rays).transpose()
         ray_dirs = np.array([np.array([1, 0, 0])] * np.shape(rays)[1]).transpose()  # rays initialize down x-axis
-        DCM = rbk.euler1232C([0., 0., angle]).transpose()
+        DCM = euler1232C([0., 0., angle]).transpose()
         ray_dirs = np.dot(DCM, ray_dirs)  # rays rotated by given angle
         rays_list.append(rays)
         rays_d_list.append(ray_dirs)

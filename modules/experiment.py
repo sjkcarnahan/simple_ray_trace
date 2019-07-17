@@ -1,20 +1,11 @@
 '''
 Scott Carnahan
-A ray tracing library I wrote for 5760
+simple ray trace - Experiment and Results Containers
 Spring 2019
 '''
 
 import numpy as np
 import matplotlib.pyplot as plt
-from mpl_toolkits.mplot3d import Axes3D
-from Basilisk.utilities import RigidBodyKinematics as rbk
-
-
-
-
-
-
-
 
 class RayTraceResults:
     def __init__(self):

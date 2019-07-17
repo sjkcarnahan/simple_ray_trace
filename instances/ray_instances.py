@@ -4,7 +4,7 @@ simple ray trace
 This file is a set of useful and reusable instances of rays at their start points (light_sources)
 '''
 
-from modules import instruments, light_sources as ls, optical_surfaces as surfs
+from modules import light_sources as ls
 import numpy as np
 from instances.instrument_instances import cass_inputs
 
