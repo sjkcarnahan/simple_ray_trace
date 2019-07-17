@@ -35,4 +35,3 @@ if save_plots:
 if show_plots:
     plt.show()
 plt.close('all')
-

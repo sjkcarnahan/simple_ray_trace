@@ -24,7 +24,6 @@ exp_2.add_instrument(ii.cass)
 ray_sets = ri.angled_ray_list
 angle_set = ri.various_angles
 
-
 # run the Experiments
 result_plot_list = []
 for angle, ray in zip(angle_set, ray_sets):
