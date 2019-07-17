@@ -8,7 +8,7 @@ import matplotlib.pyplot as plt
 from srt_modules import experiment as rt
 from srt_instances import instrument_instances as ii, ray_instances as ri
 
-show_plots = False
+show_plots = True
 save_plots = True
 make_plots = show_plots or save_plots
 
@@ -19,9 +19,7 @@ exp_30 = rt.Experiment()
 exp_30.add_instrument(ii.cass)
 
 # bring the 30 arcsecond rays
-rays_30 = ri.thirty_sec_rays
-exp_30.set_ray_start_dir(rays_30.d)
-exp_30.set_ray_starts(rays_30.X)
+exp_30.set_ray_starts(ri.thirty_sec_rays)
 nominal_results = exp_30.run()
 f_num_2 = ii.cass_inputs.f_num_total - ii.cass_inputs.f_num_1
 suggested_offset = f_num_2 * nominal_results.mean_spread

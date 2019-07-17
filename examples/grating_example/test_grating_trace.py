@@ -9,9 +9,7 @@ import numpy as np
 from copy import deepcopy
 
 exp = rt.Experiment()
-rays = deepcopy(ri.basic_paraxial_rays)
-exp.set_ray_starts(rays.X)
-exp.set_ray_start_dir(rays.d)
+exp.set_ray_starts(deepcopy(ri.basic_paraxial_rays))
 
 exp.add_instrument(deepcopy(ii.grating_cassegrain))
 grating = exp.instrument.surfaces[-2]

@@ -26,9 +26,7 @@ exp_sph = experiment.Experiment()
 exp_sph.add_instrument(ii.cass)
 
 # choose some rays
-rays = ri.five_min_rays
-exp_sph.set_ray_starts(rays.X)
-exp_sph.set_ray_start_dir(rays.d)
+exp_sph.set_ray_starts(ri.five_min_rays)
 
 # make a spherical detector
 spherical_detector = surfs.SphericalDetector([-np.pi/2., 0., 0.], [0., 0., 0.])

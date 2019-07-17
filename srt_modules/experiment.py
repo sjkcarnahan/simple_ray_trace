@@ -7,6 +7,7 @@ Spring 2019
 import numpy as np
 import matplotlib.pyplot as plt
 import light_sources as ls
+from copy import deepcopy
 
 class RayTraceResults:
     def __init__(self):
@@ -31,12 +32,10 @@ class RayTraceResults:
 class Experiment:
     def __init__(self):
         self.instrument = None # the instrument to send rays through including detector
-        self.L_ray_pts = None  # current location of rays in lab frame, L in [m]
-        self.L_ray_dir = None  # direction of rays in lab frame, L
-        self.ray_hist = []
+        self.rays = ls.Ray()
+        self.ray_hist = [np.array([])]  # list of ray positions on each surface
         self.name = "experiment"
-        self.L_ray_starts = None
-        self.L_ray_start_dirs = None
+        self.ray_starts = ls.Ray()
         return
 
     def add_instrument(self, inst_in):
@@ -44,28 +43,20 @@ class Experiment:
         return
 
     def set_ray_starts(self, ray_starts):
-        self.L_ray_pts = ray_starts
-        self.ray_hist.append(ray_starts)  # will I have to np.copy here?
-        self.L_ray_starts = ray_starts  # can reset to this
-        return
-
-    def set_ray_start_dir(self, ray_dirs):
-        self.L_ray_dir = ray_dirs
-        self.L_ray_start_dirs = ray_dirs  # can reset to this
+        self.rays = deepcopy(ray_starts)
+        self.ray_hist.append(ray_starts.X)  # will I have to np.copy here?
+        self.ray_starts = deepcopy(ray_starts)
         return
 
     def reset(self):
-        self.L_ray_pts = self.L_ray_starts
-        self.ray_hist = [self.L_ray_pts]
-        self.L_ray_dir = self.L_ray_start_dirs
+        self.rays = deepcopy(self.ray_starts)
+        self.ray_hist = [self.rays.X]
         return
 
     def trace_rays(self):
-        rays = ls.Ray(self.L_ray_pts, self.L_ray_dir)
         for i, surf in enumerate(self.instrument.surfaces):
-            rays = surf.interact(rays)
-            self.ray_hist.append(rays.X)
-        self.L_ray_pts, self.L_ray_dir = rays.X, rays.d
+            self.rays = surf.interact(self.rays)
+            self.ray_hist.append(self.rays.X)
         return
 
     def run(self):
@@ -89,7 +80,7 @@ class Experiment:
         fig = plt.figure()
         ax = fig.add_subplot('111')
         ax.set_title('Results from ' + self.name)
-        self.instrument.detector.plot_image(ax, self.L_ray_pts)
+        self.instrument.detector.plot_image(ax, self.rays.X)
         ax.set_xlabel('RA [rad]')
         ax.set_ylabel('DEC [rad]')
         return fig

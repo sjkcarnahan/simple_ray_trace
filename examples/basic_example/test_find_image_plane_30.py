@@ -17,8 +17,7 @@ exp_30.add_instrument(deepcopy(ii.cass))
 
 # bring the 30 arcsecond rays
 rays_30 = deepcopy(ri.thirty_sec_rays)
-exp_30.set_ray_start_dir(rays_30.d)
-exp_30.set_ray_starts(rays_30.X)
+exp_30.set_ray_starts(rays_30)
 nominal_results = exp_30.run()
 f_num_2 = ii.cass_inputs.f_num_total - ii.cass_inputs.f_num_1
 suggested_offset = f_num_2 * nominal_results.mean_spread

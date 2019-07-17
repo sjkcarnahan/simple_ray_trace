@@ -24,8 +24,7 @@ exp_5.add_instrument(ii.cass)
 
 # bring the 30 arcsecond rays
 rays_5 = ri.five_min_rays
-exp_5.set_ray_start_dir(rays_5.d)
-exp_5.set_ray_starts(rays_5.X)
+exp_5.set_ray_starts(rays_5)
 nominal_results = exp_5.run()
 f_num_2 = ii.cass_inputs.f_num_total - ii.cass_inputs.f_num_1
 suggested_offset = f_num_2 * nominal_results.mean_spread    # as a first guess, the offset required should be related to

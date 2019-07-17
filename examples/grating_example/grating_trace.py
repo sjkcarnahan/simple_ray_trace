@@ -11,9 +11,7 @@ from tabulate import tabulate  # note, you can pip install this. It's a handy li
                                 # tables nicely.
 
 exp = rt.Experiment()
-rays = ri.basic_paraxial_rays
-exp.set_ray_starts(rays.X)
-exp.set_ray_start_dir(rays.d)
+exp.set_ray_starts(ri.basic_paraxial_rays)
 
 exp.add_instrument(ii.grating_cassegrain)
 grating = ii.grating  # grab for convenience

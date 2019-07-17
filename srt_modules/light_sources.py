@@ -32,8 +32,7 @@ class AngledCircleRayDef:
 def make_angled_circle_rays(inputs):
     rad_inc = inputs.rad / inputs.num_circ  # radius increment
     theta_inc = np.pi * 2 / inputs.per_circ  # angle increment
-    rays_list = []  # set of sets of start points
-    rays_d_list = []  # set of sets of directions
+    ray_set_list = []  # set of sets of start points
     for angle in inputs.angles:
         rays = []
         angle = angle / 3600. * np.pi / 180.  # convert from arc sec to radians
@@ -47,9 +46,8 @@ def make_angled_circle_rays(inputs):
         ray_dirs = np.array([np.array([1, 0, 0])] * np.shape(rays)[1]).transpose()  # rays initialize down x-axis
         DCM = euler1232C([0., 0., angle]).transpose()
         ray_dirs = np.dot(DCM, ray_dirs)  # rays rotated by given angle
-        rays_list.append(rays)
-        rays_d_list.append(ray_dirs)
-    return rays_list, rays_d_list  # here we have a list of ray sets. one set per angle given. many rays per set
+        ray_set_list.append(Ray(rays, ray_dirs))
+    return ray_set_list  # here we have a list of ray sets. one set per angle given. many rays per set
 
 def make_one_edge_ray(rad, angle):
     # rad is radius of primary
@@ -59,4 +57,4 @@ def make_one_edge_ray(rad, angle):
     L_X = np.array([x,y,z]).reshape([3, 1])
     angle = angle/3600. * np.pi/180.
     dir = np.array([np.cos(angle), -np.sin(angle), 0]).reshape([3, 1])
-    return L_X, dir
+    return Ray(L_X, dir)

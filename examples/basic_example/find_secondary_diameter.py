@@ -15,8 +15,7 @@ exp_diam.add_instrument(ii.cass)
 
 # bring in the one off axis edge ray
 edge_ray = ri.edge_ray
-exp_diam.set_ray_starts(edge_ray.X)
-exp_diam.set_ray_start_dir(edge_ray.d)
+exp_diam.set_ray_starts(edge_ray)
 
 # do it to it
 exp_diam.run()

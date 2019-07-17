@@ -28,8 +28,7 @@ angle_set = ri.various_angles
 result_plot_list = []
 for angle, ray in zip(angle_set, ray_sets):
     exp_2.name = str(angle)
-    exp_2.set_ray_starts(ray.X)
-    exp_2.set_ray_start_dir(ray.d)
+    exp_2.set_ray_starts(ray)
     exp_2.run()
     result_plot_list.append(exp_2.result_plot())
 
