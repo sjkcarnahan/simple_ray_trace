@@ -53,7 +53,7 @@ def cassegrain_set_up(inputs):  # inputs are a CassegrainDefinition()
     primary_position = np.array([inputs.primary_x, 0, 0])  # in the lab frame
     primary_a = 1. / (4. * f_1)
     primary_hole_diam = 0.1
-    primary = surfs.parabolicMirrorWithHole(primary_a, inputs.d_1, primary_hole_diam, inputs.orientation_212, primary_position)
+    primary = surfs.ParabolicMirrorWithHole(primary_a, inputs.d_1, primary_hole_diam, inputs.orientation_212, primary_position)
 
     # establish secondary mirror
     secondary_position = np.array([inputs.primary_x + d + secondary_a, 0., 0])  # lab frame
@@ -87,7 +87,7 @@ def cassegrain_set_up_spherical_detector(f_num_1, d_1, f_num_tot, e, primary_x, 
     primary_position = np.array([primary_x, 0, 0])
     primary_a = 1. / (4. * f_1)
     primary_hole_diam = 0.1
-    primary = surfs.parabolicMirrorWithHole(primary_a, d_1, primary_hole_diam, orientation, primary_position)
+    primary = surfs.ParabolicMirrorWithHole(primary_a, d_1, primary_hole_diam, orientation, primary_position)
     secondary_position = np.array([primary_x + d + secondary_a, 0., 0])
     secondary = surfs.ConvexHyperbolicMirror(secondary_b, secondary_a, d_2, secondary_position, orientation)
     dead_spot_position = secondary_position - np.array([secondary.max_z, 0., 0.])

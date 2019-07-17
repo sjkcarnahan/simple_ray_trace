@@ -6,7 +6,46 @@ import numpy as np
 from srt_modules.useful_math import solve_quadratic, mullers_quadratic_equation
 from srt_modules.useful_math import euler2122C
 
-class parabolicMirrorWithHole:
+class OpticalSurface(object):
+    # An abstract class from which to derive mirrors, dead spots, detectors, etc.
+    def __init__(self, e212, L_r_L):
+        self.DCM_SL = euler2122C(e212)
+        self.DCM_LS = self.DCM_SL.transpose()
+        self.L_r_L = L_r_L
+        self.local_rays = np.array([])
+        self.lab_rays = np.array([])
+        return
+
+    def intersect_rays(self):
+        return
+
+    def miss_rays(self):
+        return
+
+    def reflect_rays(self):
+        return
+
+    def make_local_rays(self, rays):
+        self.lab_rays = rays
+        self.local_rays.set_pos(np.dot(self.DCM_SL, self.lab_rays.X - self.L_r_L))
+        self.local_rays.set_dir(np.dot(self.DCM_SL, self.lab_rays.d))
+        return
+
+    def translate_rays_to_lab(self):
+        self.lab_rays.set_pos(np.dot(self.DCM_LS, self.local_rays.X) + self.L_r_L)
+        self.lab_rays.set_dir(np.dot(self.DCM_LS, self.local_rays.d))
+        return
+
+    def interact(self, rays):
+        self.make_local_rays(rays)
+        self.intersect_rays()
+        self.miss_rays()
+        self.reflect_rays()
+        self.translate_rays_to_lab()
+        return self.lab_rays
+
+
+class ParabolicMirrorWithHole(OpticalSurface):
     # a symmetric paraboloid
     # a is the scaling factor. a(x2 + y2) = z
     # outer diam is the mirror size
