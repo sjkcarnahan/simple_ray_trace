@@ -12,6 +12,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 from srt_modules import experiment, optical_surfaces as surfs
 from srt_instances import instrument_instances as ii, ray_instances as ri
+from mpl_toolkits import mplot3d
 
 # plotting flags
 show_plots = True

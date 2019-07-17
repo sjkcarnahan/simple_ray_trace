@@ -234,8 +234,9 @@ class CircleOfDeath(OpticalSurface):
         self.local_rays.X = temp.transpose()
         return
 
-class ConvexHyperbolicMirror:
+class ConvexHyperbolicMirror(OpticalSurface):
     def __init__(self, b, a, diam, L_r_L, e212):
+        super(ConvexHyperbolicMirror, self).__init__(e212, L_r_L)
         # (x2 + y2)/b2 - z2/a2 = -1 and take the positive solution
         # where b**2 = f**2 - a**2. and f is the focal distance.
         self.a = a
@@ -243,8 +244,6 @@ class ConvexHyperbolicMirror:
         self.diam = diam
         self.max_z = 10.
         self.min_z = 0.
-        self.L_r_L = L_r_L.reshape([3, 1])
-        self.DCM_SL = euler2122C(e212)
         self.set_limits()
         self.S_focus = np.zeros(3)
         self.L_focus = np.zeros(3)
@@ -254,7 +253,7 @@ class ConvexHyperbolicMirror:
     def set_focus(self):
         f = np.sqrt(self.a**2 + self.b**2)
         self.S_focus = np.array([0., 0., f])
-        self.L_focus = np.dot(self.DCM_SL.transpose(), self.S_focus) + self.L_r_L.reshape([3, ])
+        self.L_focus = np.dot(self.DCM_LS, self.S_focus) + self.L_r_L.reshape([3, ])
         return
 
     def set_limits(self):
@@ -281,7 +280,7 @@ class ConvexHyperbolicMirror:
         y_out = y_out[(z_out <= self.max_z) & (z_out >= self.min_z)]
         z_out = z_out[(z_out <= self.max_z) & (z_out >= self.min_z)]
         X = np.vstack([x_out, y_out, z_out])
-        X = np.dot(self.DCM_SL.transpose(), X)
+        X = np.dot(self.DCM_LS, X)
         X = X + self.L_r_L
         return X
 
@@ -295,7 +294,7 @@ class ConvexHyperbolicMirror:
         for i in range(np.shape(Z)[0]):
             for j in range(np.shape(Z)[1]):
                 vec = np.array([X[i,j], Y[i,j], Z[i,j]])
-                vec = np.dot(self.DCM_SL.transpose(), vec)
+                vec = np.dot(self.DCM_LS, vec)
                 vec = vec + self.L_r_L.reshape(3,)
                 X[i,j], Y[i,j], Z[i, j] = vec[0], vec[1], vec[2]
         return X, Y, Z
@@ -304,99 +303,72 @@ class ConvexHyperbolicMirror:
         # defining equation for a circular hyperboloid
         return np.sqrt(((xs**2 + ys**2)/self.b ** 2 + 1) * self.a**2)
 
-    def intersect_rays(self, L_X_0, L_X_d):
+    def intersect_rays(self):
         # takes in ray starts and direction unit vectors in lab frame
-        num = np.shape(L_X_0)[1]
-        S_X_0 = np.dot(self.DCM_SL, L_X_0 - self.L_r_L)
-        S_X_d = np.dot(self.DCM_SL, L_X_d)
-        x0s = S_X_0[0, :]
-        xds = S_X_d[0, :]
-        y0s = S_X_0[1, :]
-        yds = S_X_d[1, :]
-        z0s = S_X_0[2, :]
-        zds = S_X_d[2, :]
+        x0s, y0s, z0s, xds, yds, zds = self.extract_ray_components()
         A = (xds**2 + yds**2) / self.b**2 - zds**2 / self.a**2
         B = 2 * (x0s*xds + yds*y0s) / self.b**2 - 2 * z0s * zds / self.a**2
         C = (x0s**2 + y0s**2) / self.b**2 - z0s**2 / self.a**2 + 1.
         non_nan = ~np.isnan(x0s)
         ts = mullers_quadratic_equation(A[non_nan], B[non_nan], C[non_nan], 1)
-        S_X_1 = S_X_0
-        S_X_1[:, non_nan] = S_X_0[:, non_nan] + ts * S_X_d[:, non_nan]
-        L_X_1 = np.dot(self.DCM_SL.transpose(), S_X_1) + self.L_r_L
-        return L_X_1
+        self.local_rays.X[:, non_nan] = self.local_rays.X[:, non_nan] + ts * self.local_rays.d[:, non_nan]
+        return
 
-    def normal(self, L_X):
+    def normals(self):
         # given points on the hyperbolloid, gives unit normal vectors.
-        S_X = np.dot(self.DCM_SL, L_X - self.L_r_L)
-        xs = S_X[0, :]
-        ys = S_X[1, :]
-        zs = S_X[2, :]
-        num = np.shape(ys)
+        xs, ys, zs, _, _, _ = self.extract_ray_components()
         S_N = np.array([2 * xs / self.b ** 2, 2 * ys / self.b ** 2, -2 * zs / self.a**2])
         S_N_hat = S_N / np.linalg.norm(S_N, axis=0)
-        L_N_hat = np.dot(self.DCM_SL.transpose(), S_N_hat)
+        L_N_hat = np.dot(self.DCM_LS, S_N_hat)
         return L_N_hat
 
-    def reflect_rays(self, L_X, L_d_i):
+    def reflect_rays(self):
         # takes an intersect point L_X and incoming direction L_d_i
         # produces an outgoing direction L_d_o
-        num = np.shape(L_X)[1]
-        L_N_hat = self.normal(L_X)
+        num = np.shape(self.local_rays.X)[1]
+        L_N_hat = self.normals()
         L_d_o = []
         for i in range(num):
-            incoming = L_d_i[:,i]
+            incoming = self.lab_rays.d[:,i]
             nHat = L_N_hat[:,i]
             M = np.eye(3) - 2 * np.outer(nHat, nHat)
             L_d_o.append(np.dot(M, incoming))
-        return np.array(L_d_o).transpose()  # just put it back into 3xN array format
+        self.local_rays.d = np.dot(self.DCM_SL, np.array(L_d_o).transpose())
+        return
 
-    def miss_rays(self, L_X):
-        # L_X is an intersection point for a hyperboloid that is infinite with no holes
-        S_X = np.dot(self.DCM_SL, L_X - self.L_r_L)
-        zs = S_X[2, :]
+    def miss_rays(self):
+        zs = self.local_rays.X[2, :]
         zs[np.isnan(zs)] = 1E10
-        temp = S_X.transpose()
+        temp = self.local_rays.X.transpose()
         temp[zs > self.max_z] = np.array([np.nan] * 3)
-        S_X = temp.transpose()
-        L_X = np.dot(self.DCM_SL.transpose(), S_X) + self.L_r_L
-        return L_X
+        self.local_rays.X = temp.transpose()
+        return
 
-class FlatImagePlane:
+class FlatImagePlane(OpticalSurface):
     def __init__(self, w, h, L_r_L, e212):
+        super(FlatImagePlane, self).__init__(e212, L_r_L)
         self.w = w
         self.h = h
-        self.L_r_L = L_r_L.reshape([3, 1])
-        self.DCM_SL = euler2122C(e212)
         self.name = "image_plane"
 
-    def intersect_rays(self, L_X_0, L_X_d):
+    def intersect_rays(self):
         # takes in ray starts and direction unit vectors in lab frame
-        num = np.shape(L_X_0)[1]
-        S_X_0 = np.dot(self.DCM_SL, L_X_0 - self.L_r_L)
-        S_X_d = np.dot(self.DCM_SL, L_X_d)
-        x0s = S_X_0[0, :]
-        xds = S_X_d[0, :]
-        y0s = S_X_0[1, :]
-        yds = S_X_d[1, :]
-        z0s = S_X_0[2, :]
-        zds = S_X_d[2, :]
+        x0s, y0s, z0s, xds, yds, zds = self.extract_ray_components()
         ts = -z0s / zds
         xs = x0s + ts * xds
         ys = y0s + ts * yds
-        S_X_1 = S_X_0 + ts * S_X_d
-        temp = S_X_1.transpose()
+        temp = np.array(self.local_rays.X + ts * self.local_rays.d).transpose()
         xs[np.isnan(xs)] = 10000.
         ys[np.isnan(ys)] = 10000.
         temp[(np.fabs(xs) > self.w / 2.) | (np.fabs(ys) > self.h / 2.)] = np.array([np.nan] * 3)
-        S_X_1 = temp.transpose()
-        L_X_1 = np.dot(self.DCM_SL.transpose(), S_X_1) + self.L_r_L
-        return L_X_1
+        self.local_rays.X = temp.transpose()
+        return
 
-    def miss_rays(self, L_X):
-        return L_X
+    def miss_rays(self):
+        return
 
-    def reflect_rays(self, L_X, L_d):
-        return L_d
+    def reflect_rays(self):
+        return
 
     def extract_image(self, L_X):
         # takes in the points that intersected the plane
@@ -410,7 +382,7 @@ class FlatImagePlane:
         for x in xs:
             for y in ys:
                 S_pt = np.array([x, y, 0])
-                L_pt = (np.dot(self.DCM_SL.transpose(), S_pt) + self.L_r_L.reshape([3, ])).transpose()
+                L_pt = (np.dot(self.DCM_LS, S_pt) + self.L_r_L.reshape([3, ])).transpose()
                 L_pt_list.append(L_pt)
         return np.array(L_pt_list).transpose()
 
@@ -422,7 +394,7 @@ class FlatImagePlane:
         for i in range(np.shape(Z)[0]):
             for j in range(np.shape(Z)[1]):
                 vec = np.array([X[i,j], Y[i,j], Z[i,j]])
-                vec = np.dot(self.DCM_SL.transpose(), vec)
+                vec = np.dot(self.DCM_LS, vec)
                 vec = vec + self.L_r_L.reshape(3,)
                 X[i,j], Y[i,j], Z[i, j] = vec[0], vec[1], vec[2]
         return X, Y, Z

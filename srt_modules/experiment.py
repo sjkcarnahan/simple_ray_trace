@@ -70,7 +70,7 @@ class Experiment:
 
     def trace_rays_test(self):
         for i, surf in enumerate(self.instrument.surfaces):
-            if i in [0, 1]:
+            if i in [0, 1, 2]:
                 rays = ls.Ray(self.L_ray_pts, self.L_ray_dir)
                 rays = surf.interact(rays)
                 self.L_ray_pts = rays.X
