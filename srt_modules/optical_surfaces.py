@@ -56,6 +56,18 @@ class OpticalSurface(object):
         return
 
     def reflect_rays(self):
+        # takes an intersect point L_X and incoming direction L_d_i
+        # produces an outgoing direction L_d_o
+        # is there a better vectorized way of doing this?
+        # Also can it be done in the surface frame directly?
+        L_N_hat = self.normals()
+        L_d_o = []
+        for i in range(self.num_rays):
+            incoming = self.lab_rays.d[:,i]
+            nHat = L_N_hat[:,i]
+            M = np.eye(3) -2 * np.outer(nHat, nHat)
+            L_d_o.append(np.dot(M, incoming))
+        self.local_rays.d = np.dot(self.DCM_SL, np.array(L_d_o).transpose())
         return
 
     def make_local_rays(self, rays):
@@ -86,7 +98,6 @@ class OpticalSurface(object):
         z0s = self.local_rays.X[2, :]
         zds = self.local_rays.d[2, :]
         return x0s, y0s, z0s, xds, yds, zds
-
 
 class ParabolicMirrorWithHole(OpticalSurface):
     # a symmetric paraboloid
@@ -183,21 +194,6 @@ class ParabolicMirrorWithHole(OpticalSurface):
         non_nan = ~np.isnan(x0s)
         return A, B, C, non_nan
 
-    def reflect_rays(self):
-        # takes an intersect point L_X and incoming direction L_d_i
-        # produces an outgoing direction L_d_o
-        # is there a better vectorized way of doing this?
-        # Also can it be done in the surface frame directly?
-        L_N_hat = self.normals()
-        L_d_o = []
-        for i in range(self.num_rays):
-            incoming = self.lab_rays.d[:,i]
-            nHat = L_N_hat[:,i]
-            M = np.eye(3) -2 * np.outer(nHat, nHat)
-            L_d_o.append(np.dot(M, incoming))
-        self.local_rays.d = np.dot(self.DCM_SL, np.array(L_d_o).transpose())
-        return
-
 class CircleOfDeath(OpticalSurface):
     # a circular surface that kills rays (back of a mirror perhaps)
     # defined in the x-y frame with a displacement and rotation
@@ -250,6 +246,9 @@ class CircleOfDeath(OpticalSurface):
         return
 
     def miss_rays(self):
+        return
+
+    def reflect_rays(self):
         return
 
 class ConvexHyperbolicMirror(OpticalSurface):
@@ -332,20 +331,6 @@ class ConvexHyperbolicMirror(OpticalSurface):
     def normal_equation(self):
         xs, ys, zs, _, _, _ = self.extract_ray_components()
         return np.array([2 * xs / self.b ** 2, 2 * ys / self.b ** 2, -2 * zs / self.a**2])
-
-    def reflect_rays(self):
-        # takes an intersect point L_X and incoming direction L_d_i
-        # produces an outgoing direction L_d_o
-        num = np.shape(self.local_rays.X)[1]
-        L_N_hat = self.normals()
-        L_d_o = []
-        for i in range(num):
-            incoming = self.lab_rays.d[:,i]
-            nHat = L_N_hat[:,i]
-            M = np.eye(3) - 2 * np.outer(nHat, nHat)
-            L_d_o.append(np.dot(M, incoming))
-        self.local_rays.d = np.dot(self.DCM_SL, np.array(L_d_o).transpose())
-        return
 
 class FlatImagePlane(OpticalSurface):
     def __init__(self, w, h, L_r_L, e212):
