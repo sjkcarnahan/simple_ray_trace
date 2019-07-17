@@ -20,7 +20,20 @@ class OpticalSurface(object):
         self.quadratic_pm = 1  # plus (1) or minus (0) side of the solution
         return
 
+    def normal_equation(self):
+        # Given points on the surface, calculate the normal to surface at those points in S frame
+        return np.array([])  # 3 x N of normals
+
+    def normals(self):
+        # given points on the paraboloid, gives unit normal vectors in the lab frame
+        # This is because the reflection model used is done in the lab frame for an unknown reason
+        S_N = self.normal_equation()
+        S_N_hat = S_N / np.linalg.norm(S_N, axis=0)
+        L_N_hat = np.dot(self.DCM_LS, S_N_hat)
+        return L_N_hat
+
     def ABCs(self):
+        # Calculate the A, B, C terms for solving intersection quadratic equation
         A, B, C = np.array([]), np.array([]), np.array([])
         return A, B, C, []
 
@@ -108,16 +121,9 @@ class ParabolicMirrorWithHole(OpticalSurface):
         f = np.array([0., 0., 1. / 4. / self.a])
         return np.dot(self.DCM_LS, f)
 
-    def normals(self):
-        # given points on the paraboloid, gives unit normal vectors in the lab frame
-        # This is because the reflection model used is done in the lab frame for an unknown reason
-        xs = self.local_rays.X[0, :]
-        ys = self.local_rays.X[1, :]
-        num = np.shape(ys)
-        S_N = np.array([2 * self.a * xs, 2 * self.a * ys, -np.ones(num)])
-        S_N_hat = S_N / np.linalg.norm(S_N, axis=0)
-        L_N_hat = np.dot(self.DCM_LS, S_N_hat)
-        return L_N_hat
+    def normal_equation(self):
+        xs, ys, zs, _, _, _ = self.extract_ray_components()
+        return np.array([2 * self.a * xs, 2 * self.a * ys, -np.ones(np.shape(ys))])
 
     def set_limits(self):
         # because everything is done in the surface frame
@@ -323,13 +329,9 @@ class ConvexHyperbolicMirror(OpticalSurface):
         non_nan = ~np.isnan(x0s)
         return A, B, C, non_nan
 
-    def normals(self):
-        # given points on the hyperbolloid, gives unit normal vectors.
+    def normal_equation(self):
         xs, ys, zs, _, _, _ = self.extract_ray_components()
-        S_N = np.array([2 * xs / self.b ** 2, 2 * ys / self.b ** 2, -2 * zs / self.a**2])
-        S_N_hat = S_N / np.linalg.norm(S_N, axis=0)
-        L_N_hat = np.dot(self.DCM_LS, S_N_hat)
-        return L_N_hat
+        return np.array([2 * xs / self.b ** 2, 2 * ys / self.b ** 2, -2 * zs / self.a**2])
 
     def reflect_rays(self):
         # takes an intersect point L_X and incoming direction L_d_i
@@ -538,13 +540,9 @@ class RowlandCircle(OpticalSurface):
         non_nan = ~np.isnan(x0s)
         return A, B, C, non_nan
 
-    def normals(self):
-        # given points on the sphere, gives unit normal vectors.
+    def normal_equation(self):
         xs, ys, zs, _, _, _ = self.extract_ray_components()
-        S_N = -np.array([2. * xs, 2. * ys, 2. * (zs - self.r)])
-        S_N_hat = S_N / np.linalg.norm(S_N, axis=0)
-        L_N_hat = np.dot(self.DCM_LS, S_N_hat)
-        return L_N_hat
+        return -np.array([2. * xs, 2. * ys, 2. * (zs - self.r)])
 
     def miss_rays(self):
         # based on width of the element. misses if outside x,y bounds based on width of grating
@@ -631,14 +629,10 @@ class CylindricalDetector(OpticalSurface):
         self.DCM_LS = self.DCM_SL.transpose()
         return
 
-    def normal(self):
-        # given points on the cylinder, gives unit normal vectors.
+    def normal_equation(self):
         _, ys, zs, _, _, _ = self.extract_ray_components()
         num = np.shape(zs)[0]
-        S_N = -np.array([np.zeros(num), 2 * ys, 2 * (zs - self.r)])
-        S_N_hat = S_N / np.linalg.norm(S_N, axis=0)
-        L_N_hat = np.dot(self.DCM_SL.transpose(), S_N_hat)
-        return L_N_hat
+        return -np.array([np.zeros(num), 2 * ys, 2 * (zs - self.r)])
 
     def ABCs(self):
         # takes in ray starts and direction unit vectors in lab frame
