@@ -461,7 +461,7 @@ class SphericalDetector(OpticalSurface):
                 X[i,j], Y[i,j], Z[i, j] = vec[0], vec[1], vec[2]
         return X, Y, Z
 
-class RowlandCircle:
+class RowlandCircle(OpticalSurface):
     # a rowland circle diffraction grating
     # circular curvature, but square-projected cut edges
     # the surface normal points in +z direction in local (S) frame at the origin
@@ -469,15 +469,14 @@ class RowlandCircle:
     # the S frame y-axis is parallel to the gratings at the origin
     # the x-axis is y cross z, then
     # Analysis can be run for a single wavelength, for a single order of diffraction at a time
-    def __init__(self):
+    def __init__(self, e212, L_r_L):
+        super(RowlandCircle, self).__init__(e212, L_r_L)
         self.r = 1.  # radius of Rowland Circle
         self.w = 0.25  # it's a square chunk of a circle, this is the side length.
         self.m = 1  # diffraction order. For now, just choose one order to look into and do it multiple times to get
                     # multiple orders
         self.lam = 1000. / 1E10  # wavelength to consider. Again, this is just a guess for now
         self.line_density = 1000.  # grating line density
-        self.DCM_SL = np.eye(3)  # rotation into the surface frame from lab frame
-        self.L_r_L = np.zeros(3).reshape([3, 1])  # offset from lab origin in lab frame coordinates
         self.grating_direction_q = np.array([0., -1., 0.])  # parallel to gratings
         self.unprojected_spacing = 1.  # [m] bad default, really
         self.central_normal = np.array([0., 0., 1.]).reshape([3, 1])
@@ -499,6 +498,7 @@ class RowlandCircle:
 
     def set_DCM(self, dcm):
         self.DCM_SL = dcm
+        self.DCM_LS = self.DCM_SL.transpose()
         return
 
     def set_width(self, width):
@@ -521,7 +521,7 @@ class RowlandCircle:
         for i in range(np.shape(Z)[0]):
             for j in range(np.shape(Z)[1]):
                 vec = np.array([X[i,j], Y[i,j], Z[i,j]])
-                vec = np.dot(self.DCM_SL.transpose(), vec)
+                vec = np.dot(self.DCM_LS, vec)
                 vec = vec + self.L_r_L.reshape(3,)
                 X[i, j], Y[i, j], Z[i, j] = vec[0], vec[1], vec[2]
         return X, Y, Z
@@ -531,54 +531,39 @@ class RowlandCircle:
         num = np.shape(xs)[0]
         return solve_quadratic(np.ones(num), -2. * self.r * np.ones(num), xs**2 + ys**2, -1)
 
-    def intersect_rays(self, L_X_0, L_X_d):
+    def intersect_rays(self):
         # takes in ray starts and direction unit vectors in lab frame
-        S_X_0 = np.dot(self.DCM_SL, L_X_0 - self.L_r_L)
-        S_X_d = np.dot(self.DCM_SL, L_X_d)
-        x0s = S_X_0[0, :]
-        xds = S_X_d[0, :]
-        y0s = S_X_0[1, :]
-        yds = S_X_d[1, :]
-        z0s = S_X_0[2, :]
-        zds = S_X_d[2, :]
+        x0s, y0s, z0s, xds, yds, zds = self.extract_ray_components()
         A = xds**2 + yds**2 + zds**2
         B = 2. * (x0s*xds + yds*y0s + zds*z0s - self.r*zds)
         C = x0s**2 + y0s**2 + z0s**2 - 2 * self.r * z0s
         non_nan = ~np.isnan(x0s)
         ts = solve_quadratic(A[non_nan], B[non_nan], C[non_nan], 1)
-        S_X_1 = S_X_0
-        S_X_1[:, non_nan] = S_X_0[:, non_nan] + ts * S_X_d[:, non_nan]
-        L_X_1 = np.dot(self.DCM_SL.transpose(), S_X_1) + self.L_r_L
-        return L_X_1
+        self.local_rays.X[:, non_nan] = self.local_rays.X[:, non_nan] + ts * self.local_rays.d[:, non_nan]
+        return
 
-    def normal(self, L_X):
+    def normals(self):
         # given points on the sphere, gives unit normal vectors.
-        S_X = np.dot(self.DCM_SL, L_X - self.L_r_L)
-        xs = S_X[0, :]
-        ys = S_X[1, :]
-        zs = S_X[2, :]
+        xs, ys, zs, _, _, _ = self.extract_ray_components()
         S_N = -np.array([2. * xs, 2. * ys, 2. * (zs - self.r)])
         S_N_hat = S_N / np.linalg.norm(S_N, axis=0)
-        L_N_hat = np.dot(self.DCM_SL.transpose(), S_N_hat)
+        L_N_hat = np.dot(self.DCM_LS, S_N_hat)
         return L_N_hat
 
-    def miss_rays(self, L_X):
+    def miss_rays(self):
         # based on width of the element. misses if outside x,y bounds based on width of grating
-        S_X = np.dot(self.DCM_SL, L_X - self.L_r_L)
-        xs = np.fabs(S_X[0, :])
+        xs = np.fabs(self.local_rays.X[0, :])
         xs[np.isnan(xs)] = -1.
-        ys = np.fabs(S_X[1, :])
+        ys = np.fabs(self.local_rays.X[1, :])
         ys[np.isnan(ys)] = -1.
-        temp = S_X.transpose()
+        temp = self.local_rays.X.transpose()
         temp[(xs > self.w / 2.) | (ys > self.w / 2.)] = np.array([np.nan] * 3)
-        S_X = temp.transpose()
-        L_X = np.dot(self.DCM_SL.transpose(), S_X) + self.L_r_L
-        return L_X
+        self.local_rays.X = temp.transpose()
+        return
 
-    def reflect_rays(self, L_X, L_d):
+    def reflect_rays(self):
         # following spencer and murty, 1961
-        S_d = np.dot(self.DCM_SL, L_d)
-        r = np.dot(self.DCM_SL, self.normal(L_X))  # normal vectors at every intersection point in S frame
+        r = np.dot(self.DCM_SL, self.normals())
         Ks = r[0, :]
         Ls = r[1, :]
         Ms = r[2, :]
@@ -589,6 +574,7 @@ class RowlandCircle:
         d = self.unprojected_spacing / u
         L = self.m * self.lam / d  # assumes wavelength is defined in current medium or probably that we're always in vacuum
         mu = 1.  # no change in medium
+        S_d = np.copy(self.local_rays.d)
         kulvmw = np.array([np.dot(p[:, i], S_d[:, i]) for i in range(np.shape(p)[1])])
         b_prime = (mu**2. - 1. + L**2. - 2. * mu * L * kulvmw)  # notice I don't divide by r**2 because I norm my normals
         a = mu * np.array([np.dot(S_d[:, i], r[:, i]) for i in range(np.shape(S_d)[1])])
@@ -599,8 +585,8 @@ class RowlandCircle:
         G = (solve_quadratic(np.ones(np.sum(doable)), 2. * a[doable], b_prime[doable], 1))
         S_d[:, doable] = S_d[:, doable] - L[doable] * p[:, doable] + G.flatten() * r[:, doable]
         S_d[:, ~doable] = np.ones([3, np.sum(~doable)]) * np.nan
-        L_d = np.dot(self.DCM_SL.transpose(), S_d)
-        return L_d
+        self.local_rays.d = S_d
+        return
 
 class CylindricalDetector:
     # a cylindrical (circular extrusion) detector.

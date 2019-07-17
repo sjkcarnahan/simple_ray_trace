@@ -33,7 +33,7 @@ alpha = np.arcsin(mode * lam / d)  # classic grating alpha and beta angles
 rotation_for_beta_zero = euler2122C([alpha, 0., 0.])  # this is being designed to beta = 0
 DCM_basic = euler2122C([-np.pi/2., 0., 0.])
 DCM_SL = np.dot(rotation_for_beta_zero, DCM_basic)
-grating = surfs.RowlandCircle()
+grating = surfs.RowlandCircle([0., 0., 0.], [0., 0., 0.])
 grating.set_radius(1.0)
 grating.set_line_density(line_density)
 f_num_2 = cass_inputs.f_num_total - cass_inputs.f_num_1
