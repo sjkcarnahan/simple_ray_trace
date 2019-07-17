@@ -26,7 +26,7 @@ for order in [0, 1, 2]:
     for wavelength in wavelength_list:
         grating.set_wavelength(wavelength)
         exp.reset()
-        exp.trace_rays_test()
+        exp.trace_rays()
         data_list.append(detector.extract_image(exp.ray_hist[-1]))
     if order == 1:
         # this is to be done only on the 1st order trace

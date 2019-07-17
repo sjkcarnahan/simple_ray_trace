@@ -61,25 +61,10 @@ class Experiment:
         return
 
     def trace_rays(self):
-        for surf in self.instrument.surfaces:
-            self.L_ray_pts = surf.intersect_rays(self.L_ray_pts, self.L_ray_dir)
-            self.L_ray_pts = surf.miss_rays(self.L_ray_pts)
-            self.L_ray_dir = surf.reflect_rays(self.L_ray_pts, self.L_ray_dir)
-            self.ray_hist.append(self.L_ray_pts)  # will I have to np.copy here?
-        return
-
-    def trace_rays_test(self):
+        rays = ls.Ray(self.L_ray_pts, self.L_ray_dir)
         for i, surf in enumerate(self.instrument.surfaces):
-            if i in [0, 1, 2, 3]:
-                rays = ls.Ray(self.L_ray_pts, self.L_ray_dir)
-                rays = surf.interact(rays)
-                self.L_ray_pts = rays.X
-                self.L_ray_dir = rays.d
-            else:
-                self.L_ray_pts = surf.intersect_rays(self.L_ray_pts, self.L_ray_dir)
-                self.L_ray_pts = surf.miss_rays(self.L_ray_pts)
-                self.L_ray_dir = surf.reflect_rays(self.L_ray_pts, self.L_ray_dir)
-            self.ray_hist.append(self.L_ray_pts)
+            rays = surf.interact(rays)
+            self.ray_hist.append(rays.X)
         return
 
     def run(self):

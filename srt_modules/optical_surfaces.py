@@ -22,6 +22,14 @@ class OpticalSurface(object):
         return
 
     def miss_rays(self):
+        # by defining this here I imply that the default surface is a 2nd order surface of revolution.
+        # i.e. a max height can be defined that encodes whether something missed the finite surface
+        # for example, square cut surfaces or surfaces that can't miss will need to redefine.
+        zs = self.local_rays.X[2, :]
+        zs[np.isnan(zs)] = 1E10
+        temp = self.local_rays.X.transpose()
+        temp[(zs > self.max_z) | (zs < self.min_z)] = np.array([np.nan] * 3)
+        self.local_rays.X = temp.transpose()
         return
 
     def reflect_rays(self):
@@ -160,14 +168,6 @@ class ParabolicMirrorWithHole(OpticalSurface):
         self.local_rays.X[:, non_nan] = self.local_rays.X[:, non_nan] + ts * self.local_rays.d[:, non_nan]
         return
 
-    def miss_rays(self):
-        zs = self.local_rays.X[2, :]
-        zs[np.isnan(zs)] = -1.
-        temp = self.local_rays.X.transpose()
-        temp[(zs > self.max_z) | (zs < self.min_z)] = np.array([np.nan] * 3)
-        self.local_rays.X = temp.transpose()
-        return
-
     def reflect_rays(self):
         # takes an intersect point L_X and incoming direction L_d_i
         # produces an outgoing direction L_d_o
@@ -232,6 +232,9 @@ class CircleOfDeath(OpticalSurface):
         temp = np.array(self.local_rays.X + ts * self.local_rays.d).transpose()
         temp[xs**2. + ys**2. <= self.r ** 2] = np.array([np.nan] * 3)
         self.local_rays.X = temp.transpose()
+        return
+
+    def miss_rays(self):
         return
 
 class ConvexHyperbolicMirror(OpticalSurface):
@@ -334,14 +337,6 @@ class ConvexHyperbolicMirror(OpticalSurface):
             M = np.eye(3) - 2 * np.outer(nHat, nHat)
             L_d_o.append(np.dot(M, incoming))
         self.local_rays.d = np.dot(self.DCM_SL, np.array(L_d_o).transpose())
-        return
-
-    def miss_rays(self):
-        zs = self.local_rays.X[2, :]
-        zs[np.isnan(zs)] = 1E10
-        temp = self.local_rays.X.transpose()
-        temp[zs > self.max_z] = np.array([np.nan] * 3)
-        self.local_rays.X = temp.transpose()
         return
 
 class FlatImagePlane(OpticalSurface):
@@ -574,35 +569,32 @@ class RowlandCircle(OpticalSurface):
         d = self.unprojected_spacing / u
         L = self.m * self.lam / d  # assumes wavelength is defined in current medium or probably that we're always in vacuum
         mu = 1.  # no change in medium
-        S_d = np.copy(self.local_rays.d)
-        kulvmw = np.array([np.dot(p[:, i], S_d[:, i]) for i in range(np.shape(p)[1])])
+        kulvmw = np.array([np.dot(p[:, i], self.local_rays.d[:, i]) for i in range(np.shape(p)[1])])
         b_prime = (mu**2. - 1. + L**2. - 2. * mu * L * kulvmw)  # notice I don't divide by r**2 because I norm my normals
-        a = mu * np.array([np.dot(S_d[:, i], r[:, i]) for i in range(np.shape(S_d)[1])])
+        a = mu * np.array([np.dot(self.local_rays.d[:, i], r[:, i]) for i in range(np.shape(self.local_rays.d)[1])])
         nans = np.isnan(b_prime)
         doable = np.ones(len(b_prime), dtype=bool)
         doable[~nans] = b_prime[~nans] <= a[~nans]**2
         doable[nans] = False
         G = (solve_quadratic(np.ones(np.sum(doable)), 2. * a[doable], b_prime[doable], 1))
-        S_d[:, doable] = S_d[:, doable] - L[doable] * p[:, doable] + G.flatten() * r[:, doable]
-        S_d[:, ~doable] = np.ones([3, np.sum(~doable)]) * np.nan
-        self.local_rays.d = S_d
+        self.local_rays.d[:, doable] = self.local_rays.d[:, doable] - L[doable] * p[:, doable] + G.flatten() * r[:, doable]
+        self.local_rays.d[:, ~doable] = np.ones([3, np.sum(~doable)]) * np.nan
         return
 
-class CylindricalDetector:
+class CylindricalDetector(OpticalSurface):
     # a cylindrical (circular extrusion) detector.
     # The long axis is the x-axis
     # an axial ray would come in the z^ axis, going in the negative x^ direction. a reflected ray would go off in the z^
     # y is radial. orthogonal to x. orthogonal to z (which is also radial).
     # The cylinder is lifted on the z-axis so that the "vertex" of the surface is at the frame origin
-    def __init__(self):
+    def __init__(self, e212=[0., 0., 0.], L_r_L=[0., 0., 0.]):
+        super(CylindricalDetector, self).__init__(e212, L_r_L)
         self.r = 1.
         self.h = 1.  # width/height of detector
         self.sweep = np.pi / 8.
         self.y_min = -100.
         self.y_max = 100.
         self.set_y_limits()
-        self.L_r_L = np.zeros(3)
-        self.DCM_SL = np.eye(3)
         self.name = "image_plane"
 
     def set_y_limits(self):
@@ -634,57 +626,45 @@ class CylindricalDetector:
 
     def set_DCM(self, dcm):
         self.DCM_SL = dcm
+        self.DCM_LS = self.DCM_SL.transpose()
         return
 
-    def normal(self, L_X):
+    def normal(self):
         # given points on the cylinder, gives unit normal vectors.
-        S_X = np.dot(self.DCM_SL, L_X - self.L_r_L)
-        ys = S_X[1, :]
-        zs = S_X[2, :]
+        _, ys, zs, _, _, _ = self.extract_ray_components()
         num = np.shape(zs)[0]
         S_N = -np.array([np.zeros(num), 2 * ys, 2 * (zs - self.r)])
         S_N_hat = S_N / np.linalg.norm(S_N, axis=0)
         L_N_hat = np.dot(self.DCM_SL.transpose(), S_N_hat)
         return L_N_hat
 
-    def intersect_rays(self, L_X_0, L_X_d):
+    def intersect_rays(self):
         # takes in ray starts and direction unit vectors in lab frame
-        S_X_0 = np.dot(self.DCM_SL, L_X_0 - self.L_r_L)
-        S_X_d = np.dot(self.DCM_SL, L_X_d)
-        y0s = S_X_0[1, :]
-        yds = S_X_d[1, :]
-        z0s = S_X_0[2, :]
-        zds = S_X_d[2, :]
+        _, y0s, z0s, _, yds, zds = self.extract_ray_components()
         A = zds**2 + yds**2
         B = 2 * z0s * zds - 2 * self.r * zds + 2 * y0s * yds
         C = z0s**2 - 2 * self.r * z0s + y0s**2
         non_nan = ~np.isnan(y0s)
         ts = solve_quadratic(A[non_nan], B[non_nan], C[non_nan], 1)
-        S_X_1 = S_X_0
-        S_X_1[:, non_nan] = S_X_0[:, non_nan] + ts * S_X_d[:, non_nan]
-        L_X_1 = np.dot(self.DCM_SL.transpose(), S_X_1) + self.L_r_L
-        return L_X_1
+        self.local_rays.X[:, non_nan] = self.local_rays.X[:, non_nan] + ts * self.local_rays.d[:, non_nan]
+        return
 
-    def miss_rays(self, L_X):
-        S_X = np.dot(self.DCM_SL, L_X - self.L_r_L)
-        xs = S_X[0, :]
-        ys = S_X[1, :]
+    def miss_rays(self):
+        xs, ys, _, _, _, _ = self.extract_ray_components()
         xs[np.isnan(xs)] = -1E6
         ys[np.isnan(ys)] = -1E6
-        temp = S_X.transpose()
+        temp = self.local_rays.X.transpose()
         temp[(ys > self.y_max) | (ys < self.y_min) | (xs < -self.h / 2.) | (xs > self.h / 2.)] = np.array([np.nan] * 3)
-        S_X = temp.transpose()
-        L_X = np.dot(self.DCM_SL.transpose(), S_X) + self.L_r_L
-        return L_X
+        self.local_rays.X = temp.transpose()
+        return
 
-    def reflect_rays(self, L_X, L_d):
-        return L_d
+    def reflect_rays(self):
+        return
 
-    def extract_image(self, L_X):
+    def extract_image(self, _):
         # should change this into a linear and angular  coordinate. Right now it does a spherical RA/DEC transformation
-        S_X = np.dot(self.DCM_SL, L_X - self.L_r_L)
-        xs = S_X[0, :]
-        ys = S_X[1, :]
+        xs = self.local_rays.X[0, :]
+        ys = self.local_rays.X[1, :]
         RA = - np.arcsin(ys / self.r)
         ra_h = np.vstack([RA, xs])
         return ra_h
@@ -698,7 +678,7 @@ class CylindricalDetector:
         for i in range(np.shape(Z)[0]):
             for j in range(np.shape(Z)[1]):
                 vec = np.array([X[i,j], Y[i,j], Z[i,j]])
-                vec = np.dot(self.DCM_SL.transpose(), vec)
+                vec = np.dot(self.DCM_LS, vec)
                 vec = vec + self.L_r_L.reshape(3,)
                 X[i,j], Y[i,j], Z[i, j] = vec[0], vec[1], vec[2]
         return X, Y, Z
