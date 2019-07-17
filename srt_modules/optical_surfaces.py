@@ -410,52 +410,39 @@ class FlatImagePlane(OpticalSurface):
         ax.set_ylim([min_y, max_y])
         return
 
-class SphericalDetector:
+class SphericalDetector(OpticalSurface):
     # a spherical detector with square edges. it's a square with spherical curvature.
-    def __init__(self):
+    def __init__(self, e212, L_r_L):
+        super(SphericalDetector, self).__init__(e212, L_r_L)
         self.r = 1.
         self.w = 1.  # width/height of detector
-        self.L_r_L = np.zeros(3)
-        self.DCM_SL = np.eye(3)
         self.name = "image_plane"
 
     def equation(self, xs, ys):
         # defining equation for a sphere
         return np.sqrt(self.r**2 - xs**2 - ys**2)
 
-    def intersect_rays(self, L_X_0, L_X_d):
+    def intersect_rays(self):
         # takes in ray starts and direction unit vectors in lab frame
-        S_X_0 = np.dot(self.DCM_SL, L_X_0 - self.L_r_L)
-        S_X_d = np.dot(self.DCM_SL, L_X_d)
-        x0s = S_X_0[0, :]
-        xds = S_X_d[0, :]
-        y0s = S_X_0[1, :]
-        yds = S_X_d[1, :]
-        z0s = S_X_0[2, :]
-        zds = S_X_d[2, :]
+        x0s, y0s, z0s, xds, yds, zds = self.extract_ray_components()
         A = xds**2 + yds**2 + zds**2
         B = 2 * (x0s*xds + yds*y0s + zds*z0s)
         C = x0s**2 + y0s**2 + z0s**2 - self.r**2
         non_nan = ~np.isnan(x0s)
         ts = mullers_quadratic_equation(A[non_nan], B[non_nan], C[non_nan], -1)
-        S_X_1 = S_X_0
-        S_X_1[:, non_nan] = S_X_0[:, non_nan] + ts * S_X_d[:, non_nan]
-        L_X_1 = np.dot(self.DCM_SL.transpose(), S_X_1) + self.L_r_L
-        return L_X_1
+        self.local_rays.X[:, non_nan] = self.local_rays.X[:, non_nan] + ts * self.local_rays.d[:, non_nan]
+        return
 
-    def miss_rays(self, L_X):
-        return L_X
+    def miss_rays(self):
+        return
 
-    def reflect_rays(self, L_X, L_d):
-        return L_d
+    def reflect_rays(self):
+        return
 
     def extract_image(self, L_X):
         # takes in the points that intersected the detector
         # spits out angular coordinate on detector
-        S_X = np.dot(self.DCM_SL, L_X - self.L_r_L)
-        xs = S_X[0, :]
-        ys = S_X[1, :]
-        zs = S_X[2, :]
+        xs, ys, zs, _, _, _ = self.extract_ray_components()
         ras = np.arctan(ys / (zs + self.r))
         decs = np.arctan(xs / (zs + self.r))
         ra_dec = np.vstack([ras, decs])
@@ -469,7 +456,7 @@ class SphericalDetector:
         for i in range(np.shape(Z)[0]):
             for j in range(np.shape(Z)[1]):
                 vec = np.array([X[i,j], Y[i,j], Z[i,j]])
-                vec = np.dot(self.DCM_SL.transpose(), vec)
+                vec = np.dot(self.DCM_LS, vec)
                 vec = vec + self.L_r_L.reshape(3,)
                 X[i,j], Y[i,j], Z[i, j] = vec[0], vec[1], vec[2]
         return X, Y, Z

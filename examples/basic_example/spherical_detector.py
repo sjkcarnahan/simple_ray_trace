@@ -31,7 +31,7 @@ exp_sph.set_ray_starts(rays.X)
 exp_sph.set_ray_start_dir(rays.d)
 
 # make a spherical detector
-spherical_detector = surfs.SphericalDetector()
+spherical_detector = surfs.SphericalDetector([-np.pi/2., 0., 0.], [0., 0., 0.])
 spherical_detector.L_r_L = np.zeros(3).reshape([3,1])
 spherical_detector.DCM_SL = exp_sph.instrument.detector.DCM_SL
 spherical_detector.w = .5
