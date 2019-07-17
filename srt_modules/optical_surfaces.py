@@ -47,6 +47,15 @@ class OpticalSurface(object):
         self.translate_rays_to_lab()
         return self.lab_rays
 
+    def extract_ray_components(self):
+        x0s = self.local_rays.X[0, :]
+        xds = self.local_rays.d[0, :]
+        y0s = self.local_rays.X[1, :]
+        yds = self.local_rays.d[1, :]
+        z0s = self.local_rays.X[2, :]
+        zds = self.local_rays.d[2, :]
+        return x0s, y0s, z0s, xds, yds, zds
+
 
 class ParabolicMirrorWithHole(OpticalSurface):
     # a symmetric paraboloid
@@ -142,12 +151,7 @@ class ParabolicMirrorWithHole(OpticalSurface):
         return X, Y, Z
 
     def intersect_rays(self):
-        x0s = self.local_rays.X[0, :]
-        xds = self.local_rays.d[0, :]
-        y0s = self.local_rays.X[1, :]
-        yds = self.local_rays.d[1, :]
-        z0s = self.local_rays.X[2, :]
-        zds = self.local_rays.d[2, :]
+        x0s, y0s, z0s, xds, yds, zds = self.extract_ray_components()
         A = yds ** 2 + xds ** 2
         B = 2 * (x0s * xds + y0s * yds) - zds / self.a
         C = x0s**2 + y0s**2 -z0s / self.a
@@ -221,12 +225,7 @@ class CircleOfDeath(OpticalSurface):
 
     def intersect_rays(self):
         # takes in ray starts and direction unit vectors in lab frame
-        x0s = self.local_rays.X[0, :]
-        xds = self.local_rays.d[0, :]
-        y0s = self.local_rays.X[1, :]
-        yds = self.local_rays.d[1, :]
-        z0s = self.local_rays.X[2, :]
-        zds = self.local_rays.d[2, :]
+        x0s, y0s, z0s, xds, yds, zds = self.extract_ray_components()
         ts = -z0s / zds
         xs = x0s + ts * xds
         ys = y0s + ts * yds
