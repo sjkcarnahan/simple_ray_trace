@@ -3,8 +3,8 @@ Scott Carnahan
 Experiment - Cassegrain with Rowland Circle Grating
 '''
 
-from modules import experiment as rt
-from instances import instrument_instances as ii, ray_instances as ri
+from srt_modules import experiment as rt
+from srt_instances import instrument_instances as ii, ray_instances as ri
 import numpy as np
 import matplotlib.pyplot as plt
 from tabulate import tabulate  # note, you can pip install this. It's a handy little package that displays or saves

@@ -1,12 +1,12 @@
 '''
 Scott Carnahan
 simple ray trace
-This file is a set of useful and reusable instances of rays at their start points (light_sources)
+This file is a set of useful and reusable srt_instances of rays at their start points (light_sources)
 '''
 
-from modules import light_sources as ls
+from srt_modules import light_sources as ls
 import numpy as np
-from instances.instrument_instances import cass_inputs
+from srt_instances.instrument_instances import cass_inputs
 
 # basic paraxial rays
 # This light source is a set of rays in concentric circles, which is the easiest light source to use to

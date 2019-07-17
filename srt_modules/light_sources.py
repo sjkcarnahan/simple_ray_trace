@@ -3,7 +3,7 @@ Scott Carnahan
 simple ray trace - tools and classes to specify and instantiate rays
 '''
 import numpy as np
-from modules.useful_math import euler1232C
+from srt_modules.useful_math import euler1232C
 
 class Ray:
     def __init__(self):

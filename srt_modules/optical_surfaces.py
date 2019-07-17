@@ -3,8 +3,8 @@ Scott Carnahan
 simple ray trace - define surfaces (mirrors, detectors, etc)
 '''
 import numpy as np
-from modules.useful_math import solve_quadratic, mullers_quadratic_equation
-from modules.useful_math import euler2122C
+from srt_modules.useful_math import solve_quadratic, mullers_quadratic_equation
+from srt_modules.useful_math import euler2122C
 
 class parabolicMirrorWithHole:
     # a symmetric paraboloid

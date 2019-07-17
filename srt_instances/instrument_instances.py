@@ -1,13 +1,13 @@
 '''
 Scott Carnahan
-simple ray trace - instrument instances
-Here we have some useful and reusable instantiations of instrument and surface modules.
+simple ray trace - instrument srt_instances
+Here we have some useful and reusable instantiations of instrument and surface srt_modules.
 '''
 
-from modules import instruments, light_sources as ls, optical_surfaces as surfs
+from srt_modules import instruments, light_sources as ls, optical_surfaces as surfs
 import numpy as np
 from copy import deepcopy
-from modules.useful_math import euler2122C, euler1232C
+from srt_modules.useful_math import euler2122C, euler1232C
 
 # instrument design inputs
 cass_inputs = instruments.CassegrainDefinition()  # organizational tool

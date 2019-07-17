@@ -7,8 +7,8 @@ incoming angles. Coma should be quite evident.
 '''
 
 import matplotlib.pyplot as plt
-from modules import experiment as rt
-from instances import instrument_instances as ii, ray_instances as ri
+from srt_modules import experiment as rt
+from srt_instances import instrument_instances as ii, ray_instances as ri
 
 # some figure flags
 show_plots = True

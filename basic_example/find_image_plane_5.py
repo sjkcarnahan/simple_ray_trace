@@ -7,8 +7,8 @@ the paraxial focus in [um] along the instrument axis.
 
 import numpy as np
 import matplotlib.pyplot as plt
-from modules import experiment
-from instances import instrument_instances as ii, ray_instances as ri
+from srt_modules import experiment
+from srt_instances import instrument_instances as ii, ray_instances as ri
 
 show_plots = True
 save_plots = True

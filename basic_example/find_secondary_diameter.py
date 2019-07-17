@@ -4,8 +4,8 @@ ASTR 5760 Proj 1 - find secondary diameter
 Spring 2019
 '''
 
-from modules import experiment
-from instances import instrument_instances as ii, ray_instances as ri
+from srt_modules import experiment
+from srt_instances import instrument_instances as ii, ray_instances as ri
 
 # define the Experiment to find the necessary secondary diameter
 exp_diam = experiment.Experiment()

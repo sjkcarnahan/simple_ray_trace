@@ -10,8 +10,8 @@ than being projected to a flat x, y.
 
 import numpy as np
 import matplotlib.pyplot as plt
-from modules import experiment, optical_surfaces as surfs
-from instances import instrument_instances as ii, ray_instances as ri
+from srt_modules import experiment, optical_surfaces as surfs
+from srt_instances import instrument_instances as ii, ray_instances as ri
 
 # plotting flags
 show_plots = True

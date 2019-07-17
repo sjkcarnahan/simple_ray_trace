@@ -7,8 +7,8 @@ dimensions that represent the machine error in tracing the rays to a focus on th
 '''
 
 import matplotlib.pyplot as plt
-from modules import experiment as rt
-from instances import instrument_instances as ii, ray_instances as ri
+from srt_modules import experiment as rt
+from srt_instances import instrument_instances as ii, ray_instances as ri
 
 # plotting flags
 show_plots = True

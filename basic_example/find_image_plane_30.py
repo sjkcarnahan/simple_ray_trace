@@ -5,8 +5,8 @@ For more descriptive comments, please see find_image_plane_30.py
 
 import numpy as np
 import matplotlib.pyplot as plt
-from modules import experiment as rt
-from instances import instrument_instances as ii, ray_instances as ri
+from srt_modules import experiment as rt
+from srt_instances import instrument_instances as ii, ray_instances as ri
 
 show_plots = False
 save_plots = True

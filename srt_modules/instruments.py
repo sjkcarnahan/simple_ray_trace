@@ -1,9 +1,9 @@
 '''
 Scott Carnahan
-simple ray trace - instrument modules and utilities
+simple ray trace - instrument srt_modules and utilities
 '''
 import numpy as np
-from modules import optical_surfaces as surfs
+from srt_modules import optical_surfaces as surfs
 
 class CassegrainDefinition:
     def __init__(self):
