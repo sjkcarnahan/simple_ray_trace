@@ -59,20 +59,20 @@ for order in [0, 1, 2]:
         # realistically large to be able to catch 0th-2nd orders all at once.
         # plt.savefig('./figures/lab_view.png')
 
-scat_fig = plt.figure(figsize=(20, 5))
-
-ax2 = scat_fig.add_subplot('111')
-for order in range(3):
-    for col, wavelength in zip(ri.colors, data_list):
-        ax2.scatter(wavelength[0, :], wavelength[1, :]*100, s=1, color=col)
-ax2.set_xlabel('RA [rad]')
-ax2.set_ylabel('height (along cylinder axis) [cm]')
-ax2.legend([str(int(w)) for w in wavelength_list], markerscale=6, title='[A]')
-ax2.text(0.575, 2., '0 order', bbox=dict(facecolor='black', alpha=0.05))
-ax2.text(0., 2., 'first order', bbox=dict(facecolor='black', alpha=0.05))
-ax2.text(-0.6, 2., 'second order', bbox=dict(facecolor='black', alpha=0.05))
-plt.savefig('./figures/spectrum.png')
-plt.show()
+# scat_fig = plt.figure(figsize=(20, 5))
+#
+# ax2 = scat_fig.add_subplot('111')
+# for order in range(3):
+#     for col, wavelength in zip(ri.colors, data_list):
+#         ax2.scatter(wavelength[0, :], wavelength[1, :]*100, s=1, color=col)
+# ax2.set_xlabel('RA [rad]')
+# ax2.set_ylabel('height (along cylinder axis) [cm]')
+# ax2.legend([str(int(w)) for w in wavelength_list], markerscale=6, title='[A]')
+# ax2.text(0.575, 2., '0 order', bbox=dict(facecolor='black', alpha=0.05))
+# ax2.text(0., 2., 'first order', bbox=dict(facecolor='black', alpha=0.05))
+# ax2.text(-0.6, 2., 'second order', bbox=dict(facecolor='black', alpha=0.05))
+# plt.savefig('./figures/spectrum.png')
+# plt.show()
 
 
 

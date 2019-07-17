@@ -16,9 +16,19 @@ class OpticalSurface(object):
         self.local_rays = light_sources.Ray()
         self.lab_rays = light_sources.Ray()
         self.num_rays = 0
+        self.quadratic_solver = mullers_quadratic_equation
+        self.quadratic_pm = 1  # plus (1) or minus (0) side of the solution
         return
 
+    def ABCs(self):
+        A, B, C = np.array([]), np.array([]), np.array([])
+        return A, B, C, []
+
     def intersect_rays(self):
+        # should work for all second order surfaces
+        A, B, C, non_nan = self.ABCs()
+        ts = self.quadratic_solver(A[non_nan], B[non_nan], C[non_nan], self.quadratic_pm)
+        self.local_rays.X[:, non_nan] = self.local_rays.X[:, non_nan] + ts * self.local_rays.d[:, non_nan]
         return
 
     def miss_rays(self):
@@ -85,6 +95,7 @@ class ParabolicMirrorWithHole(OpticalSurface):
         self.S_focus = np.array([0., 0., 1 / 4. / a])
         self.L_focus = np.dot(self.DCM_SL.transpose(), np.array([0., 0., 1 / 4. / a])) + self.L_r_L.reshape([3, ])
         self.name = 'primary'
+        self.quadratic_pm = -1
 
     def equation(self, xs, ys):
         # defining equation for a paraboloid
@@ -158,15 +169,13 @@ class ParabolicMirrorWithHole(OpticalSurface):
                 X[i,j], Y[i,j], Z[i, j] = vec[0], vec[1], vec[2]
         return X, Y, Z
 
-    def intersect_rays(self):
+    def ABCs(self):
         x0s, y0s, z0s, xds, yds, zds = self.extract_ray_components()
         A = yds ** 2 + xds ** 2
         B = 2 * (x0s * xds + y0s * yds) - zds / self.a
         C = x0s**2 + y0s**2 -z0s / self.a
         non_nan = ~np.isnan(x0s)
-        ts = mullers_quadratic_equation(A[non_nan], B[non_nan], C[non_nan], -1)
-        self.local_rays.X[:, non_nan] = self.local_rays.X[:, non_nan] + ts * self.local_rays.d[:, non_nan]
-        return
+        return A, B, C, non_nan
 
     def reflect_rays(self):
         # takes an intersect point L_X and incoming direction L_d_i
@@ -306,16 +315,13 @@ class ConvexHyperbolicMirror(OpticalSurface):
         # defining equation for a circular hyperboloid
         return np.sqrt(((xs**2 + ys**2)/self.b ** 2 + 1) * self.a**2)
 
-    def intersect_rays(self):
-        # takes in ray starts and direction unit vectors in lab frame
+    def ABCs(self):
         x0s, y0s, z0s, xds, yds, zds = self.extract_ray_components()
         A = (xds**2 + yds**2) / self.b**2 - zds**2 / self.a**2
         B = 2 * (x0s*xds + yds*y0s) / self.b**2 - 2 * z0s * zds / self.a**2
         C = (x0s**2 + y0s**2) / self.b**2 - z0s**2 / self.a**2 + 1.
         non_nan = ~np.isnan(x0s)
-        ts = mullers_quadratic_equation(A[non_nan], B[non_nan], C[non_nan], 1)
-        self.local_rays.X[:, non_nan] = self.local_rays.X[:, non_nan] + ts * self.local_rays.d[:, non_nan]
-        return
+        return A, B, C, non_nan
 
     def normals(self):
         # given points on the hyperbolloid, gives unit normal vectors.
@@ -411,21 +417,19 @@ class SphericalDetector(OpticalSurface):
         self.r = 1.
         self.w = 1.  # width/height of detector
         self.name = "image_plane"
+        self.quadratic_pm = -1
 
     def equation(self, xs, ys):
         # defining equation for a sphere
         return np.sqrt(self.r**2 - xs**2 - ys**2)
 
-    def intersect_rays(self):
-        # takes in ray starts and direction unit vectors in lab frame
+    def ABCs(self):
         x0s, y0s, z0s, xds, yds, zds = self.extract_ray_components()
         A = xds**2 + yds**2 + zds**2
         B = 2 * (x0s*xds + yds*y0s + zds*z0s)
         C = x0s**2 + y0s**2 + z0s**2 - self.r**2
         non_nan = ~np.isnan(x0s)
-        ts = mullers_quadratic_equation(A[non_nan], B[non_nan], C[non_nan], -1)
-        self.local_rays.X[:, non_nan] = self.local_rays.X[:, non_nan] + ts * self.local_rays.d[:, non_nan]
-        return
+        return A, B, C, non_nan
 
     def miss_rays(self):
         return
@@ -474,6 +478,7 @@ class RowlandCircle(OpticalSurface):
         self.grating_direction_q = np.array([0., -1., 0.])  # parallel to gratings
         self.unprojected_spacing = 1.  # [m] bad default, really
         self.central_normal = np.array([0., 0., 1.]).reshape([3, 1])
+        self.quadratic_solver = solve_quadratic
         return
 
     def set_radius(self, radius):
@@ -525,16 +530,13 @@ class RowlandCircle(OpticalSurface):
         num = np.shape(xs)[0]
         return solve_quadratic(np.ones(num), -2. * self.r * np.ones(num), xs**2 + ys**2, -1)
 
-    def intersect_rays(self):
-        # takes in ray starts and direction unit vectors in lab frame
+    def ABCs(self):
         x0s, y0s, z0s, xds, yds, zds = self.extract_ray_components()
         A = xds**2 + yds**2 + zds**2
         B = 2. * (x0s*xds + yds*y0s + zds*z0s - self.r*zds)
         C = x0s**2 + y0s**2 + z0s**2 - 2 * self.r * z0s
         non_nan = ~np.isnan(x0s)
-        ts = solve_quadratic(A[non_nan], B[non_nan], C[non_nan], 1)
-        self.local_rays.X[:, non_nan] = self.local_rays.X[:, non_nan] + ts * self.local_rays.d[:, non_nan]
-        return
+        return A, B, C, non_nan
 
     def normals(self):
         # given points on the sphere, gives unit normal vectors.
@@ -595,6 +597,7 @@ class CylindricalDetector(OpticalSurface):
         self.y_max = 100.
         self.set_y_limits()
         self.name = "image_plane"
+        self.quadratic_solver = solve_quadratic
 
     def set_y_limits(self):
         self.y_max = self.r * np.sin(self.sweep / 2.)
@@ -637,16 +640,14 @@ class CylindricalDetector(OpticalSurface):
         L_N_hat = np.dot(self.DCM_SL.transpose(), S_N_hat)
         return L_N_hat
 
-    def intersect_rays(self):
+    def ABCs(self):
         # takes in ray starts and direction unit vectors in lab frame
         _, y0s, z0s, _, yds, zds = self.extract_ray_components()
         A = zds**2 + yds**2
         B = 2 * z0s * zds - 2 * self.r * zds + 2 * y0s * yds
         C = z0s**2 - 2 * self.r * z0s + y0s**2
         non_nan = ~np.isnan(y0s)
-        ts = solve_quadratic(A[non_nan], B[non_nan], C[non_nan], 1)
-        self.local_rays.X[:, non_nan] = self.local_rays.X[:, non_nan] + ts * self.local_rays.d[:, non_nan]
-        return
+        return A, B, C, non_nan
 
     def miss_rays(self):
         xs, ys, _, _, _, _ = self.extract_ray_components()
