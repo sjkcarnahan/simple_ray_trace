@@ -18,7 +18,10 @@ class OpticalSurface(object):
         self.num_rays = 0
         self.quadratic_solver = mullers_quadratic_equation
         self.quadratic_pm = 1  # plus (1) or minus (0) side of the solution
-        self.r = 1.
+        self.r = 0.5
+        self.max_z = 100.
+        self.min_z = 0.
+        self.outer_diam = 2. * self.r
         return
 
     def normal_equation(self):
@@ -105,6 +108,7 @@ class OpticalSurface(object):
         return x0s, y0s, z0s, xds, yds, zds
 
     def surface_mesh(self, r_pts=2, t_pts=30):
+        # define a mesh grid to plot a surface (as opposed to a collection of points)
         out_rad = self.r
         rad_points = np.linspace(0., out_rad, r_pts)
         theta_points = np.linspace(0., np.pi * 2., t_pts)
@@ -118,6 +122,29 @@ class OpticalSurface(object):
                 vec = vec + self.L_r_L.reshape(3,)
                 X[i,j], Y[i,j], Z[i, j] = vec[0], vec[1], vec[2]
         return X, Y, Z
+
+    def surface_points(self, n=50):
+        # gives X, Y, Z points for the surface to be scatter-plotted
+        xs = np.linspace(-self.outer_diam / 2, self.outer_diam/2, n).tolist()
+        x_out = []
+        ys = np.linspace(-self.outer_diam / 2, self.outer_diam /2, n).tolist()
+        y_out = []
+        z_out = []
+        for x in xs:
+            for y in ys:
+                x_out.append(x)
+                y_out.append(y)
+                z_out.append(self.equation(x, y))
+        x_out = np.array(x_out)
+        y_out = np.array(y_out)
+        z_out = np.array(z_out)
+        x_out = x_out[(z_out <= self.max_z) & (z_out >= self.min_z)]
+        y_out = y_out[(z_out <= self.max_z) & (z_out >= self.min_z)]
+        z_out = z_out[(z_out <= self.max_z) & (z_out >= self.min_z)]
+        X = np.vstack([x_out, y_out, z_out])
+        X = np.dot(self.DCM_LS, X)
+        X = X + self.L_r_L
+        return X
 
 class ParabolicMirrorWithHole(OpticalSurface):
     # a symmetric paraboloid
@@ -166,29 +193,6 @@ class ParabolicMirrorWithHole(OpticalSurface):
         rad = self.inner_diam / 2.
         self.min_z = self.a * rad ** 2
         return
-
-    def surface_points(self, n=50):
-        # gives X, Y, Z points for the surface to be scatter-plotted
-        xs = np.linspace(-self.outer_diam/2, self.outer_diam/2, n).tolist()
-        x_out = []
-        ys = np.linspace(-self.outer_diam / 2, self.outer_diam /2, n).tolist()
-        y_out = []
-        z_out = []
-        for x in xs:
-            for y in ys:
-                x_out.append(x)
-                y_out.append(y)
-                z_out.append(self.equation(x, y))
-        x_out = np.array(x_out)
-        y_out = np.array(y_out)
-        z_out = np.array(z_out)
-        x_out = x_out[(z_out <= self.max_z) & (z_out >= self.min_z)]
-        y_out = y_out[(z_out <= self.max_z) & (z_out >= self.min_z)]
-        z_out = z_out[(z_out <= self.max_z) & (z_out >= self.min_z)]
-        X = np.vstack([x_out, y_out, z_out])
-        X = np.dot(self.DCM_LS, X)
-        X = X + self.L_r_L
-        return X
 
     def ABCs(self):
         x0s, y0s, z0s, xds, yds, zds = self.extract_ray_components()
@@ -251,8 +255,8 @@ class ConvexHyperbolicMirror(OpticalSurface):
         # where b**2 = f**2 - a**2. and f is the focal distance.
         self.a = a
         self.b = b
-        self.diam = diam
-        self.r = self.diam / 2.
+        self.outer_diam = diam
+        self.r = self.outer_diam / 2.
         self.max_z = 10.
         self.min_z = 0.
         self.set_limits()
@@ -268,32 +272,10 @@ class ConvexHyperbolicMirror(OpticalSurface):
         return
 
     def set_limits(self):
-        rad = self.diam / 2.
+        rad = self.outer_diam / 2.
         self.max_z = self.equation(rad, 0)
         self.min_z = self.a
         return
-
-    def surface_points(self, n=50):
-        xs = np.linspace(-self.diam / 2., self.diam / 2., n).tolist()
-        x_out = []
-        ys = np.linspace(-self.diam / 2., self.diam / 2., n).tolist()
-        y_out = []
-        z_out = []
-        for x in xs:
-            for y in ys:
-                x_out.append(x)
-                y_out.append(y)
-                z_out.append(self.equation(x, y))
-        x_out = np.array(x_out)
-        y_out = np.array(y_out)
-        z_out = np.array(z_out)
-        x_out = x_out[(z_out <= self.max_z) & (z_out >= self.min_z)]
-        y_out = y_out[(z_out <= self.max_z) & (z_out >= self.min_z)]
-        z_out = z_out[(z_out <= self.max_z) & (z_out >= self.min_z)]
-        X = np.vstack([x_out, y_out, z_out])
-        X = np.dot(self.DCM_LS, X)
-        X = X + self.L_r_L
-        return X
 
     def equation(self, xs, ys):
         # defining equation for a circular hyperboloid
