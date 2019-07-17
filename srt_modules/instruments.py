@@ -4,6 +4,7 @@ simple ray trace - instrument srt_modules and utilities
 '''
 import numpy as np
 from srt_modules import optical_surfaces as surfs
+from useful_math import euler2122C
 
 class CassegrainDefinition:
     def __init__(self):
@@ -15,6 +16,36 @@ class CassegrainDefinition:
         self.orientation_212 = [-np.pi / 2., 0, 0]  # 2-1-2 euler angle [radians] attitude of the system wrt lab frame
         self.focal_plane_offset = 0.  # move the focal plane +/- this much along the instrument axis off of the focus
         return
+
+class RowlandCircleDefinition:
+    def __init__(self):
+        self.line_density = 3600.  # per mm
+        self.mode = 1  # mode/order. design the placement of the detector and grating around 1st order diffraction
+        self.lam = 1600E-10  # design wavelength
+        self.e212 = [0., 0., 0.]
+        self.radius = 1.0
+        self.focus = np.array([])
+        self.width = 0.25
+        self.order = 0
+        return
+
+def rowland_circle_setup(inputs):
+        d = 1. / (inputs.line_density * 1000.)  # [m] per groove
+        alpha = np.arcsin(inputs.mode * inputs.lam / d)  # classic grating alpha and beta angles
+        rotation_for_beta_zero = euler2122C([alpha, 0., 0.])  # this is being designed to beta = 0
+        DCM_basic = euler2122C(inputs.e212)
+        DCM_SL = np.dot(rotation_for_beta_zero, DCM_basic)
+        offset = inputs.radius * np.cos(alpha)
+        pos = inputs.focus + np.array([offset, 0, 0]).reshape([3, 1])
+
+        grating = surfs.RowlandCircle(inputs.e212, pos)
+        grating.set_radius(inputs.radius)
+        grating.set_line_density(inputs.line_density)
+        grating.set_DCM(DCM_SL)
+        grating.set_width(inputs.width)
+        grating.set_order(inputs.order)
+        grating.set_wavelength(inputs.lam)
+        return grating
 
 class Instrument:
     # An instrument is more or less a list of detectors

@@ -24,38 +24,29 @@ cass = instruments.Instrument()  # you need an instrument to add to an experimen
 cass.set_surfaces(instruments.cassegrain_set_up(cass_inputs))  # and an instrument is essentially a collection of surfaces
 
 # grating stuff
-# inputs to rowland circle
-line_density = 3600.  # per mm
-mode = 1  # mode/order. design the placement of the detector and grating around 1st order diffraction
-lam = 1600E-10  # design wavelength
-d = 1. / (line_density * 1000.)  # [m] per groove
-alpha = np.arcsin(mode * lam / d)  # classic grating alpha and beta angles
-rotation_for_beta_zero = euler2122C([alpha, 0., 0.])  # this is being designed to beta = 0
-DCM_basic = euler2122C([-np.pi/2., 0., 0.])
-DCM_SL = np.dot(rotation_for_beta_zero, DCM_basic)
-grating = surfs.RowlandCircle([0., 0., 0.], [0., 0., 0.])
-grating.set_radius(1.0)
-grating.set_line_density(line_density)
-f_num_2 = cass_inputs.f_num_total - cass_inputs.f_num_1
-offset = grating.r * np.cos(alpha)
-focus = cass.surfaces[-1].L_r_L
-pos = focus + np.array([offset, 0, 0]).reshape([3, 1])
-grating.set_position(pos)
-grating.set_DCM(DCM_SL)
-grating.set_width(0.24)  # just want a square chunk of the sphere
-grating.set_order(0)  # order that calculations will currently be done in
-grating.set_wavelength(1600.)
+# inputs to and creation of rowland circle
+grating_inputs = instruments.RowlandCircleDefinition()
+grating_inputs.line_density = 3600.
+grating_inputs.mode = 1  # mode/order. design the placement of the detector and grating around 1st order diffraction
+grating_inputs.lam = 1600E-10  # design wavelength
+grating_inputs.e212 = [-np.pi/2., 0., 0.]
+grating_inputs.radius = 1.0
+grating_inputs.focus = cass.surfaces[-1].L_r_L
+grating_inputs.order = 0
+grating_inputs.width = 0.24
+grating = instruments.rowland_circle_setup(grating_inputs)
+
 
 # a cylindrical detector will be used to read the results of the grating expriment
 cylindrical_detector = surfs.CylindricalDetector()
 cylindrical_detector.set_radius(1.0)
 cylindrical_detector.set_height(1.0)
 cylindrical_detector.set_sweep_angle(np.pi)
-dcm_cyl = np.dot(euler2122C([np.pi, 0., 0.]), DCM_SL)
+dcm_cyl = np.dot(euler2122C([np.pi, 0., 0.]), grating.DCM_SL)
 dcm_rot = np.dot(euler1232C([0., 0., -np.pi/2.]), dcm_cyl)
 cylindrical_detector.set_DCM(dcm_rot)
-offset = np.dot(DCM_SL.transpose() , np.array([0., 0., 1.0]))
-cylindrical_detector.set_position(pos + offset.reshape([3, 1]))
+offset = np.dot(grating.DCM_SL.transpose() , np.array([0., 0., 1.0]))
+cylindrical_detector.set_position(grating.L_r_L + offset.reshape([3, 1]))
 cylindrical_detector.set_y_limits()
 
 # Make an instrument with a grating
