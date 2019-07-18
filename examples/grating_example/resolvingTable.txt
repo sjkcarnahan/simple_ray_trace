@@ -1,0 +1,9 @@
+\begin{tabular}{rr}
+\hline
+   Wavelength &   Resolving Power \\
+\hline
+         1200 &           679.706 \\
+         1600 &          5842.83  \\
+         2000 &          1132.96  \\
+\hline
+\end{tabular}
