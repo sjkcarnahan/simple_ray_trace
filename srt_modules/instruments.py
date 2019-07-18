@@ -4,7 +4,7 @@ simple ray trace - instrument srt_modules and utilities
 '''
 import numpy as np
 from srt_modules import optical_surfaces as surfs
-from useful_math import euler2122C
+from useful_math import euler2122C, euler1232C
 
 class CassegrainDefinition:
     def __init__(self):
@@ -22,12 +22,38 @@ class RowlandCircleDefinition:
         self.line_density = 3600.  # per mm
         self.mode = 1  # mode/order. design the placement of the detector and grating around 1st order diffraction
         self.lam = 1600E-10  # design wavelength
-        self.e212 = [0., 0., 0.]
+        self.e212 = [0., 0., 0.]  # atttidue to hit incoming rays parallel to grating surface normal
         self.radius = 1.0
-        self.focus = np.array([])
-        self.width = 0.25
-        self.order = 0
+        self.focus = np.array([])  # where in the lab is the focus of the RC supposed to be (incoming)
+        self.width = 0.25  # for square cut of the sphere
+        self.order = 0  # initial order to analyze
         return
+
+class CylindricalDetectorDefinition:
+    # This definition is based off of a surface that is sending light toward the detector, so the "base" properties are
+    # referring to that surface
+    def __init__(self):
+        self.radius = 1.0  # of cylinder
+        self.height = 1.0  # of section of cylinder
+        self.sweep_angle = np.pi  # about the axis
+        self.base_DCM_SL = np.array([])  # attitude of the surface that is projecting light to the cylinder (RC for example)
+        self.base_position = np.array([])
+        self.offset_distance = 1.0  # distance from previous surface to be (probably focal length of system or prev surface)
+        return
+
+def cylindrical_detector_setup(inputs):
+    dcm_cyl = np.dot(euler2122C([np.pi, 0., 0.]), inputs.base_DCM_SL)
+    dcm_rot = np.dot(euler1232C([0., 0., -np.pi / 2.]), dcm_cyl)
+    offset = np.dot(inputs.base_DCM_SL.transpose() , np.array([0., 0., inputs.offset_distance]))
+
+    detector = surfs.CylindricalDetector()
+    detector.set_radius(inputs.radius)
+    detector.set_height(inputs.height)
+    detector.set_sweep_angle(inputs.sweep_angle)
+    detector.set_DCM(dcm_rot)
+    detector.set_position(inputs.base_position + offset.reshape([3, 1]))
+    detector.set_y_limits()
+    return detector
 
 def rowland_circle_setup(inputs):
         d = 1. / (inputs.line_density * 1000.)  # [m] per groove

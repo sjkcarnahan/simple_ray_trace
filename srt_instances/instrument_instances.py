@@ -4,10 +4,9 @@ simple ray trace - instrument srt_instances
 Here we have some useful and reusable instantiations of instrument and surface srt_modules.
 '''
 
-from srt_modules import instruments, light_sources as ls, optical_surfaces as surfs
+from srt_modules import instruments
 import numpy as np
 from copy import deepcopy
-from srt_modules.useful_math import euler2122C, euler1232C
 
 # instrument design inputs
 cass_inputs = instruments.CassegrainDefinition()  # organizational tool
@@ -36,22 +35,19 @@ grating_inputs.order = 0
 grating_inputs.width = 0.24
 grating = instruments.rowland_circle_setup(grating_inputs)
 
-
 # a cylindrical detector will be used to read the results of the grating expriment
-cylindrical_detector = surfs.CylindricalDetector()
-cylindrical_detector.set_radius(1.0)
-cylindrical_detector.set_height(1.0)
-cylindrical_detector.set_sweep_angle(np.pi)
-dcm_cyl = np.dot(euler2122C([np.pi, 0., 0.]), grating.DCM_SL)
-dcm_rot = np.dot(euler1232C([0., 0., -np.pi/2.]), dcm_cyl)
-cylindrical_detector.set_DCM(dcm_rot)
-offset = np.dot(grating.DCM_SL.transpose() , np.array([0., 0., 1.0]))
-cylindrical_detector.set_position(grating.L_r_L + offset.reshape([3, 1]))
-cylindrical_detector.set_y_limits()
+cylindrical_detector_inputs = instruments.CylindricalDetectorDefinition()
+cylindrical_detector_inputs.radius = 1.0
+cylindrical_detector_inputs.height = 1.0
+cylindrical_detector_inputs.sweep_angle = np.pi
+cylindrical_detector_inputs.base_DCM_SL = grating.DCM_SL
+cylindrical_detector_inputs.base_position = grating.L_r_L
+cylindrical_detector_inputs.offset_distance = grating_inputs.radius
+cylindrical_detector = instruments.cylindrical_detector_setup(cylindrical_detector_inputs)
 
-# Make an instrument with a grating
+# Make an instrument with a grating and cylindrical detector
 grating_cassegrain = instruments.Instrument()
 grating_cassegrain.set_surfaces(deepcopy(cass.surfaces))
 grating_cassegrain.surfaces[-1] = grating
-grating_cassegrain.surfaces.append(cylindrical_detector)
-grating_cassegrain.set_detector(cylindrical_detector)
+grating_cassegrain.surfaces.append(deepcopy(cylindrical_detector))
+grating_cassegrain.set_detector(deepcopy(cylindrical_detector))

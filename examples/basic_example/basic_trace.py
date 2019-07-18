@@ -1,9 +1,9 @@
 '''
 Scott Carnahan
-ASTR 5760 Proj 1 - Ray Trace
 Spring 2019
-This example traces paraxial rays from some start to the image plane. The resulting plot should have exceedingly small
-dimensions that represent the machine error in tracing the rays to a focus on the image plane.
+This example traces paraxial rays from some start to the image plane through a basic cassegrain telescope.
+The resulting plot should have exceedingly small dimensions that represent the machine error in tracing the rays
+ to a focus on the image plane.
 '''
 
 import matplotlib.pyplot as plt

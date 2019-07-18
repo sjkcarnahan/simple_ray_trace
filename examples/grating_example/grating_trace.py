@@ -14,8 +14,8 @@ exp = rt.Experiment()
 exp.set_ray_starts(ri.basic_paraxial_rays)
 
 exp.add_instrument(ii.grating_cassegrain)
-grating = ii.grating  # grab for convenience
-detector = ii.cylindrical_detector  # grab for convenience
+grating = exp.instrument.surfaces[-2]  # grab for convenience
+detector = exp.instrument.detector  # grab for convenience
 wavelength_list = ri.wavelength_list
 
 data_list = []  # each entry will be the scatter plot from a single wavelength, single diffraction order
@@ -58,20 +58,20 @@ for order in [0, 1, 2]:
         # plt.savefig('./figures/lab_view.png')
         # plt.show()
 
-# scat_fig = plt.figure(figsize=(20, 5))
-#
-# ax2 = scat_fig.add_subplot('111')
-# for order in range(3):
-#     for col, wavelength in zip(ri.colors, data_list):
-#         ax2.scatter(wavelength[0, :], wavelength[1, :]*100, s=1, color=col)
-# ax2.set_xlabel('RA [rad]')
-# ax2.set_ylabel('height (along cylinder axis) [cm]')
-# ax2.legend([str(int(w)) for w in wavelength_list], markerscale=6, title='[A]')
-# ax2.text(0.575, 2., '0 order', bbox=dict(facecolor='black', alpha=0.05))
-# ax2.text(0., 2., 'first order', bbox=dict(facecolor='black', alpha=0.05))
-# ax2.text(-0.6, 2., 'second order', bbox=dict(facecolor='black', alpha=0.05))
-# plt.savefig('./figures/spectrum.png')
-# plt.show()
+scat_fig = plt.figure(figsize=(20, 5))
+
+ax2 = scat_fig.add_subplot('111')
+for order in range(3):
+    for col, wavelength in zip(ri.colors, data_list):
+        ax2.scatter(wavelength[0, :], wavelength[1, :]*100, s=1, color=col)
+ax2.set_xlabel('RA [rad]')
+ax2.set_ylabel('height (along cylinder axis) [cm]')
+ax2.legend([str(int(w)) for w in wavelength_list], markerscale=6, title='[A]')
+ax2.text(0.575, 2., '0 order', bbox=dict(facecolor='black', alpha=0.05))
+ax2.text(0., 2., 'first order', bbox=dict(facecolor='black', alpha=0.05))
+ax2.text(-0.6, 2., 'second order', bbox=dict(facecolor='black', alpha=0.05))
+plt.savefig('./figures/spectrum.png')
+plt.show()
 
 
 
